@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#08090A">
+<meta name="description" content="A self-knowledge instrument built on five behavioral patterns: how you love, work, and break.">
+<title>Elemental Blueprint</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308090A'/%3E%3Cpath d='M16 4 L27.4 12.3 L23.1 25.7 L8.9 25.7 L4.6 12.3 Z' fill='none' stroke='%23E8EDEA' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   Elemental Blueprint · a scholar's instrument, night build
+   Void black, phosphor ink, five bright mineral signals.
+   Late-90s vector look: hard corners, aliased strokes, mono
+   headings, faint scanlines. The data reads brightest; a color
+   only ever means its element, and the Sheng ring carries the
+   generative flow as gradients between neighbors.
+   Token names kept from v1 (--paper is now the void, --ink the
+   phosphor) so CONTENT and ENGINE stay untouched by the reskin.
+   ============================================================ */
+:root{
+  --paper:#08090A;
+  --ink:#E8EDEA;
+  --ink-70:rgba(232,237,234,.75);
+  --ink-55:rgba(232,237,234,.62);
+  --ink-25:rgba(232,237,234,.30);
+  --ink-12:rgba(232,237,234,.16);
+  --ink-07:rgba(232,237,234,.08);
+  /* phosphor set: every one holds AA against the void */
+  --wood:#4CC08A; --fire:#FF5C3D; --earth:#F0B43C; --metal:#9FB0B8; --water:#4FA8E8;
+  --wood-t:var(--wood); --fire-t:var(--fire); --earth-t:var(--earth); --metal-t:var(--metal); --water-t:var(--water);
+  --mono:'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+  --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --fast:160ms;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{forced-color-adjust:none;-webkit-text-size-adjust:100%;background:var(--paper)}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+/* CRT scanlines, faint enough to feel rather than see */
+body::after{content:"";position:fixed;inset:0;z-index:99;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
+main#app{max-width:600px;margin:0 auto;padding:28px 20px 40px;min-height:72vh}
+footer#foot{max-width:600px;margin:0 auto;padding:20px 20px 36px}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+/* headings receive programmatic focus for screen readers; no visible ring */
+h1[tabindex="-1"]:focus,h2[tabindex="-1"]:focus{outline:none}
+::selection{background:var(--ink);color:var(--paper)}
+
+.screen{animation:fin var(--fast) ease}
+.center{text-align:center}
+
+/* type: mono carries the voice; body stays system sans */
+.display{font-family:var(--mono);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lbl{font:700 11px/1.4 var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-55)}
+.micro{font:400 12px/1.6 var(--mono);color:var(--ink-55)}
+h1.display{font-size:clamp(21px,6vw,29px);line-height:1.3}
+h2.display{font-size:clamp(17px,4.6vw,21px);line-height:1.4}
+p.lede{font-size:17px;color:var(--ink-70)}
+
+/* buttons */
+.btn{display:inline-block;font:700 13px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink);background:transparent;border:2px solid var(--ink);border-radius:0;
+  padding:15px 28px;cursor:pointer;transition:background var(--fast),color var(--fast);touch-action:manipulation}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.3;cursor:default}
+.btn:disabled:hover{background:transparent;color:var(--ink)}
+.btn.wide{width:100%;text-align:center}
+.linkbtn{font:500 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-70);
+  background:none;border:none;border-bottom:1px solid var(--ink-25);padding:4px 1px;cursor:pointer;transition:color var(--fast),border-color var(--fast)}
+.linkbtn:hover{color:var(--ink);border-color:var(--ink)}
+
+/* chips (about screen) */
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 4px}
+.chip{font:500 14px/1 var(--mono);color:var(--ink);background:transparent;border:1px solid var(--ink-25);
+  border-radius:0;padding:13px 16px;cursor:pointer;min-height:44px;touch-action:manipulation;
+  transition:background var(--fast),color var(--fast),border-color var(--fast)}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.field{margin:26px 0}
+.field .note{font-size:13px;color:var(--ink-55);margin-top:6px}
+input.name{width:100%;font:400 18px/1.4 var(--body);color:var(--ink);background:transparent;
+  border:none;border-bottom:2px solid var(--ink-25);border-radius:0;padding:9px 2px;transition:border-color var(--fast)}
+input.name:focus{border-color:var(--ink)}
+
+/* quiz */
+.qhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.qnum{font:700 13px/1 var(--mono);letter-spacing:.12em;color:var(--ink-55)}
+.dots{display:flex;gap:7px;justify-content:center;margin:16px 0 26px}
+.dots i{width:7px;height:7px;background:var(--ink-12)}
+.dots i.done{background:var(--ink-25)}
+.dots i.on{background:var(--ink)}
+.qtext{font-weight:600;font-size:clamp(18px,5vw,21px);line-height:1.45;margin:6px 0 22px}
+.opt{display:block;width:100%;text-align:left;font:400 15.5px/1.45 var(--body);color:var(--ink);
+  background:transparent;border:1px solid var(--ink-25);border-radius:0;padding:15px 76px 15px 34px;
+  margin:10px 0;cursor:pointer;position:relative;min-height:52px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-color var(--fast),background var(--fast),box-shadow var(--fast)}
+.opt::before{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  font:700 14px/1 var(--mono);color:var(--ink)}
+.opt:hover{border-color:var(--ink-70)}
+.opt.pick{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--ink-07)}
+.opt.pick::before{content:">"}
+.opt.also{border-color:var(--ink);border-style:dashed}
+.opt.also::before{content:"+"}
+.opt .tag{position:absolute;top:50%;right:12px;transform:translateY(-50%);
+  font:700 9.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-70)}
+.hint{font-size:12.5px;color:var(--ink-55);margin:14px 0 20px;font-family:var(--mono);line-height:1.7}
+.qnav{display:flex;gap:12px;align-items:center;margin-top:6px}
+.qnav .btn{flex:1}
+
+/* pentagon: aliased vector wireframe. Ring segments carry the
+   generative flow as color gradients; the data polygon is phosphor */
+.penta{display:block;margin:0 auto}
+.penta text{font-family:var(--mono)}
+.penta .vname{font-size:10.5px;font-weight:700;letter-spacing:.18em}
+.penta .vpct{font-size:20px;font-weight:700;fill:var(--ink)}
+.penta .ringseg{stroke-width:2;shape-rendering:crispEdges}
+.penta .chord{stroke:var(--ink);stroke-opacity:.15;stroke-width:1;shape-rendering:crispEdges}
+.penta .poly{fill:rgba(232,237,234,.08);stroke:var(--ink);stroke-width:2;stroke-linejoin:miter;shape-rendering:crispEdges}
+.penta .vsq{shape-rendering:crispEdges}
+.penta.animate .ringseg{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .3s linear forwards}
+.penta.animate .chord{opacity:0;animation:fin .4s ease 1.05s forwards}
+.penta.animate .poly{transform-box:fill-box;transform-origin:center;opacity:0;transform:scale(.55);
+  animation:pop .7s cubic-bezier(.2,.8,.3,1) 1.35s forwards}
+.penta.animate .vlabel{opacity:0;animation:fin .5s ease 1.35s forwards}
+
+/* reveal sequencing */
+.fin{opacity:0;animation:fin .55s ease var(--d,0s) forwards}
+.revealname{font-size:clamp(34px,10vw,48px);line-height:1.15;letter-spacing:.14em}
+.statechip{display:inline-block;font:700 11px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;
+  border:2px solid var(--ink);padding:8px 14px}
+.portrait{font-size:16.5px;line-height:1.75;color:var(--ink);text-align:left;margin:22px auto;max-width:52ch}
+
+/* blueprint */
+.bphead{text-align:center;margin-bottom:8px}
+.bpname{font-size:clamp(27px,8vw,38px);letter-spacing:.14em}
+.section{margin:34px 0}
+.rule{width:28px;height:3px;margin:8px 0 12px}
+.card{border:1px solid var(--ink-25);padding:16px 18px}
+.cols{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:540px){.cols{grid-template-columns:1fr 1fr}}
+ul.plain{list-style:none}
+ul.plain li{position:relative;padding:5px 0 5px 16px;font-size:15px;line-height:1.55}
+ul.plain li::before{content:"";position:absolute;left:0;top:.8em;width:5px;height:5px;background:var(--ink-55)}
+ol.practices{list-style:none;counter-reset:pr}
+ol.practices li{counter-increment:pr;position:relative;padding:10px 0 10px 40px;font-size:15.5px;line-height:1.65;border-top:1px solid var(--ink-12)}
+ol.practices li:first-child{border-top:none}
+ol.practices li::before{content:"0" counter(pr);position:absolute;left:0;top:12px;
+  font:700 13px/1 var(--mono);color:var(--ink-55);letter-spacing:.05em}
+.stressname{font:700 13px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;margin-bottom:8px}
+
+/* footer */
+footer#foot{border-top:1px solid var(--ink-12)}
+.footrow{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:14px}
+.disclaimer{font-size:11.5px;line-height:1.7;color:var(--ink-55);font-family:var(--mono)}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+  font:700 12px/1 var(--mono);letter-spacing:.08em;padding:12px 18px;z-index:100;
+  animation:fin .2s ease}
+#toast[hidden]{display:none}
+
+@keyframes fin{to{opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<footer id="foot"></footer>
+<div id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ================================================================
+   CONTENT · every user-visible string lives here.
+   Copy edits must never require touching the ENGINE or UI below.
+   ================================================================ */
+const CONTENT = {
+
+  meta: {
+    app: "Elemental Blueprint",
+    tagline: "A pattern language for how you love, work, and break.",
+    landingNote: "Three minutes · Nothing leaves this device",
+    disclaimer: "A self-reflection tool. Not a psychological assessment, diagnosis, or advice.",
+    privacyNote: "All data stays on this device."
+  },
+
+  framing: {
+    label: "Before you begin",
+    title: "What this is, and is not",
+    paras: [
+      "This is a mirror, not a measurement of your worth. It borrows a very old pattern language, five recurring styles of moving through the world, and treats them as exactly that: patterns. How you start things. How you hold people. What happens to you under pressure, and what it takes to bring you back.",
+      "It is not fortune-telling, not medicine, and not a verdict. Nothing here predicts your future or diagnoses your mind. The five styles are lenses, not boxes; you contain all of them, in your own proportions, and the proportions can change.",
+      "Answer as the person you have actually been lately, not the one you intend to become. Every option is someone's finest trait and someone's worst Tuesday; there are no right answers, only honest ones. It takes about three minutes."
+    ],
+    button: "Continue"
+  },
+
+  about: {
+    label: "About you",
+    title: "Three details first",
+    intro: "These shape wording and, later, your matches. They never change how you are typed.",
+    nameLabel: "What should we call you? (optional)",
+    agePrompt: "Your age",
+    ageBands: [
+      { value: "18-26", label: "18-26" },
+      { value: "27-33", label: "27-33" },
+      { value: "34-37", label: "34-37" },
+      { value: "38+",   label: "38+" }
+    ],
+    seekingPrompt: "Who are you looking for?",
+    seekingNote: "This shapes pronouns in your matches, never the math.",
+    seekingOptions: [
+      { value: "women",    label: "Women" },
+      { value: "men",      label: "Men" },
+      { value: "everyone", label: "Everyone" }
+    ],
+    polarityPrompt: "What do you most want more of from a partner?",
+    polarityOptions: [
+      { value: "direction", label: "Direction and containment" },
+      { value: "flow",      label: "Warmth and flow" },
+      { value: "switch",    label: "A live switch between both" }
+    ],
+    button: "Begin the assessment"
+  },
+
+  quiz: {
+    hint: "Tap your closest answer. Hold a second one if it is also you; on a keyboard, focus it and press A.",
+    pickTag: "Closest",
+    alsoTag: "Also me",
+    back: "Back",
+    next: "Next",
+    finish: "See your pattern",
+    counterOf: "of"
+  },
+
+  reveal: {
+    label: "Your pattern",
+    primaryLabel: "Primary",
+    secondaryLabel: "Secondary",
+    button: "Open your Blueprint",
+    chartAria: "A five-sided chart of your element percentages"
+  },
+
+  blueprint: {
+    label: "Blueprint",
+    driveLabel: "Core drive",
+    giftsLabel: "Gifts",
+    registersLabel: "Two registers",
+    matureLabel: "Mature",
+    shadowLabel: "Shadow",
+    stressLabel: "Stress signature",
+    practicesLabel: "Three practices"
+  },
+
+  footer: {
+    retake: "Retake",
+    copyCode: "Copy my code",
+    erase: "Erase my data",
+    copied: "Code copied",
+    confirmRetake: "Retake the assessment? Your current result will be replaced when you finish.",
+    confirmErase: "Erase everything this app has stored on this device?"
+  },
+
+  states: {
+    grounded: {
+      name: "Grounded",
+      gloss: "You are running the mature register of your pattern right now. Treat it as weather worth maintaining, not a rank you hold."
+    },
+    integrating: {
+      name: "Integrating",
+      gloss: "You are between registers: mature in some rooms, reactive in others. This is where most honest people live, and where the most growth is available."
+    },
+    reactive: {
+      name: "Reactive",
+      gloss: "The shadow register is driving right now. This is weather, not identity; it moves with pressure, rest, and practice."
+    }
+  },
+
+  elements: {
+    wood: {
+      name: "Wood",
+      archetype: "The Pioneer / The Builder",
+      drive: "Growth, expansion, execution. To move, to build, to turn vision into ground gained.",
+      portrait: "You metabolize life through motion. Where others see an obstacle, you feel a door that has not been pushed hard enough. Your gift is ignition: the plan becomes a first step while the room is still talking. The cost of the gift is friction; when pushing fails, you push harder, and the anger that fuels you begins to spend you. Your work is not to slow down. It is to choose which walls deserve you.",
+      gifts: [
+        "Ignition: the first step actually happens",
+        "Clean, direct assertion",
+        "Vision turned into schedule",
+        "Courage that rises with resistance"
+      ],
+      mature: [
+        "Starts before conditions are perfect",
+        "Says the hard thing early, without heat",
+        "Turns frustration into the next concrete move",
+        "Clears obstacles for slower movers",
+        "Finishes calmly what urgency started"
+      ],
+      shadow: [
+        "Pushes harder at a wall that needed a door",
+        "Blames the obstacle, then whoever is near it",
+        "The impulsive yes, the resentful follow-through",
+        "Bulldozes quiet voices without noticing",
+        "Treats rest as defeat"
+      ],
+      stress: {
+        name: "Fight",
+        body: "Under load you accelerate: push harder, blame the obstacle, recruit anger as fuel. The tell is jaw and shoulders first, volume second, and a plan that has stopped taking questions."
+      },
+      practices: [
+        "Before pushing a stalled thing a second time, say the obstacle out loud in one sentence. If the sentence contains a person's name, stop; that is not a wall, that is a conversation.",
+        "Leave one task at ninety percent once a week, on purpose, and notice what rises when you do not finish.",
+        "When anger arrives, move your body before you move your plan. Ten hard minutes, no phone. Decide after."
+      ]
+    },
+    fire: {
+      name: "Fire",
+      archetype: "The Catalyst / The Communicator",
+      drive: "Connection, joy, expression. To light the room and be met in the light.",
+      portrait: "You run on contact. A room is not finished until it is lit, and you are usually the one holding the match. Your gift is presence: people feel more alive next to you, and you feel most yourself in that exchange. The cost is scatter; when warmth is not returned you reach for more noise until the signal drowns. Your work is not to burn less. It is to choose what is worth lighting.",
+      gifts: [
+        "Warmth people feel across a room",
+        "Fast, honest expression",
+        "Joy as a way of leading",
+        "Instant, genuine rapport"
+      ],
+      mature: [
+        "Fully present with one person at a time",
+        "Charisma with boundaries attached",
+        "Says the feeling while it is still true",
+        "Celebrates others without keeping score",
+        "Leaves the party while it is still good"
+      ],
+      shadow: [
+        "Reaches for stimulation the moment feeling dips",
+        "Affection that is really a request for reassurance",
+        "Commits in the warm moment, vanishes in the cool one",
+        "A yes for everyone, then nothing left for anyone",
+        "Performs the feeling instead of having it"
+      ],
+      stress: {
+        name: "Flood",
+        body: "Under load you go toward people and noise: more plans, more messages, more charm, until you are exhausted and strangely lonely. The tell is a calendar that fills on the same day a feeling gets hard."
+      },
+      practices: [
+        "Once a day, let a good feeling finish without broadcasting it. No message, no photo. Just have it, all the way to the end.",
+        "Before any yes, name its price out loud: which hour, of which day, it will cost. If you cannot name the hour, it is not a yes yet.",
+        "When the pull toward people spikes, sit alone for five minutes first. If the pull survives silence, go; if it dissolves, it was reassurance asking, not joy."
+      ]
+    },
+    earth: {
+      name: "Earth",
+      archetype: "The Stabilizer / The Sanctuary",
+      drive: "Community, grounding, nurture. To hold a center that others can count on.",
+      portrait: "People put their weight down around you. Your gift is holding: the meal appears, the friend gets checked on, the center stays put while everyone else orbits it. You hear needs before they are spoken, including some that were never yours to carry. The cost is self-erasure; worry becomes your love language and your own hunger waits at the back of the line it built. Your work is not to give less. It is to sit down at your own table.",
+      gifts: [
+        "Steadiness others build on",
+        "Practical, unglamorous generosity",
+        "Reads needs before they are spoken",
+        "Makes belonging feel ordinary"
+      ],
+      mature: [
+        "Supports without keeping accounts",
+        "Lets people keep the struggles that are theirs",
+        "Says no and stays warm",
+        "Holds the center without gripping it",
+        "Asks for help plainly, once"
+      ],
+      shadow: [
+        "Worry on a loop, dressed as care",
+        "Help that arrives uninvited and leaves offended",
+        "Cannot rest until everyone is settled, so never rests",
+        "The known bad chosen over the unknown good",
+        "Manages other people's feelings to quiet its own"
+      ],
+      stress: {
+        name: "Tend-and-cling",
+        body: "Under load you over-involve: manage everyone's reactions, check in past the point of welcome, ruminate at night. The tell is a stomach that will not settle and a phone that will not stay down."
+      },
+      practices: [
+        "Meet one of your own needs before noon, before anyone else's. Small counts: water, food, ten minutes of quiet.",
+        "When the same worry circles a third time, write it down in one sentence and close the notebook. It will keep until morning.",
+        "Once a day, practice the unoffered help: see the need, feel the pull, and let someone find their own way."
+      ]
+    },
+    metal: {
+      name: "Metal",
+      archetype: "The Architect / The Executive",
+      drive: "Logic, structure, standards, boundaries. To refine what matters and cut what does not.",
+      portrait: "You see the grain of things: what is essential, what is excess, what is out of true. Your gift is discernment, cutting to what matters and building what lasts; order is not decoration to you, it is how you love. The cost is distance; the standard becomes a fortress and the people you refined it for end up outside the wall. Your work is not to lower the standard. It is to leave the gate open.",
+      gifts: [
+        "Clean judgment inside noise",
+        "Standards that lift a room",
+        "Boundaries drawn without drama",
+        "An eye for the essential"
+      ],
+      mature: [
+        "Clarity delivered kindly, and once",
+        "Cuts the excess, keeps the person",
+        "Integrity with no audience",
+        "Order in service of ease, not control",
+        "Lets good enough be good enough, deliberately"
+      ],
+      shadow: [
+        "Perfection used as a locked door",
+        "Withdraws behind being technically right",
+        "A cold audit for people who wanted warmth",
+        "Contempt where curiosity should be",
+        "Isolation renamed as high standards"
+      ],
+      stress: {
+        name: "Fortress",
+        body: "Under load you withdraw into order: rules quoted, doors closed, tone flat and precise. The tell is that everything is correct and nothing is warm."
+      },
+      practices: [
+        "Once a day, let one imperfect thing stand: the crooked frame, the loose phrasing, the unedited message. Notice that nothing collapses.",
+        "Trade one correction for one question. Before naming what is off, ask what happened; the standard can wait ninety seconds.",
+        "Tell one person one true thing you have refined too long. Ship the sentence at eighty percent."
+      ]
+    },
+    water: {
+      name: "Water",
+      archetype: "The Philosopher / The Visionary",
+      drive: "Depth, meaning, introspection. To understand what is really going on, all the way down.",
+      portrait: "You live at depth. Meaning is not a luxury to you; it is air, and you will quietly leave any room that runs out of it. Your gift is the long view: the question under the question, the pattern under the noise. The cost is disappearance; reflection slides into freezing, privacy into hiding, and people learn to knock on a door that rarely opens. Your work is not to go less deep. It is to come back up while it still matters.",
+      gifts: [
+        "The question underneath the question",
+        "Calm that steadies a panicked room",
+        "The long view, held with courage",
+        "Hears what is under the words"
+      ],
+      mature: [
+        "Goes inward and comes back with something",
+        "Names the deeper thing at the useful moment",
+        "Waits well, then acts once and precisely",
+        "Keeps center in a loud room",
+        "Lets meaning include other people"
+      ],
+      shadow: [
+        "Disappears inward and calls it processing",
+        "Builds theories about people instead of asking them",
+        "Freezes when feeling is required on the spot",
+        "Surface agreement, submerged verdict",
+        "Tests every joy for meaning until it fails the exam"
+      ],
+      stress: {
+        name: "Freeze",
+        body: "Under load you go still and inward: answers slow, doors close quietly, a private theory grows where a conversation should be. The tell is being technically present and nowhere in the room."
+      },
+      practices: [
+        "When you catch yourself building a theory about someone, ask them one question from it within a day.",
+        "Set a depth timer: reflect as long as you like, but return with one sentence someone else gets to hear.",
+        "Move before you conclude: cold water on the face, a walk around the block, ten slow breaths. Some certainty is only stillness that has gone on too long."
+      ]
+    }
+  },
+
+  /* Seed question bank v1. Option keys: el = element, val = M (mature) | S (shadow) | N (neutral). */
+  questions: [
+    { id: 1, text: "A completely free Saturday appears, zero obligations. Your honest first move:", options: [
+      { el: "wood",  val: "M", text: "Start the project I have been itching to launch" },
+      { el: "fire",  val: "M", text: "Text a few people; something fun will assemble itself" },
+      { el: "earth", val: "M", text: "Slow morning, cook something real, tend the house" },
+      { el: "metal", val: "M", text: "Finally sort the thing that has been quietly bothering me" },
+      { el: "water", val: "M", text: "Long walk alone with a notebook and no destination" }
+    ]},
+    { id: 2, text: "Someone close to you is upset with you and goes quiet. Before you can edit yourself, you:", options: [
+      { el: "wood",  val: "S", text: "Push to resolve it right now; the silence feels like a wall to break" },
+      { el: "fire",  val: "S", text: "Fill the air with warmth, jokes, affection, anything" },
+      { el: "earth", val: "S", text: "Start doing things for them and checking in, repeatedly" },
+      { el: "metal", val: "S", text: "Retreat into being technically correct" },
+      { el: "water", val: "S", text: "Go still and quietly build a theory of what this really means" }
+    ]},
+    { id: 3, text: "What quietly offends you most in other people:", options: [
+      { el: "wood",  val: "N", text: "Passivity; people who will not act" },
+      { el: "fire",  val: "N", text: "Coldness; people who will not play or feel" },
+      { el: "earth", val: "N", text: "Selfishness; people who will not show up for their own" },
+      { el: "metal", val: "N", text: "Sloppiness; people who do not care about doing it right" },
+      { el: "water", val: "N", text: "Shallowness; people who will not go beneath the surface" }
+    ]},
+    { id: 4, text: "A project you care about takes a real hit. The best version of your first 24 hours:", options: [
+      { el: "wood",  val: "M", text: "Attack it from a new angle; motion is medicine" },
+      { el: "fire",  val: "M", text: "Talk it through with someone until it gets lighter" },
+      { el: "earth", val: "M", text: "Steady the basics first: sleep, food, people, then reassess" },
+      { el: "metal", val: "M", text: "Audit the failure, rewrite the standard, cut what broke" },
+      { el: "water", val: "M", text: "Step back far enough to ask whether the goal was even right" }
+    ]},
+    { id: 5, text: "Same hit, worst version of you:", options: [
+      { el: "wood",  val: "S", text: "Bulldoze ahead angry and break something that was working" },
+      { el: "fire",  val: "S", text: "Spin up noise and distraction until I am exhausted" },
+      { el: "earth", val: "S", text: "Freeze in worry and manage everyone else's reactions instead" },
+      { el: "metal", val: "S", text: "Go cold, perfectionistic, privately contemptuous" },
+      { el: "water", val: "S", text: "Disappear into my head for days and call it processing" }
+    ]},
+    { id: 6, text: "A group you are part of is stuck and circling. You naturally become:", options: [
+      { el: "wood",  val: "M", text: "The one who forces a decision" },
+      { el: "fire",  val: "M", text: "The one who revives the room" },
+      { el: "earth", val: "M", text: "The one who checks that everyone is actually okay" },
+      { el: "metal", val: "M", text: "The one who structures the mess into steps" },
+      { el: "water", val: "M", text: "The one who names the deeper thing nobody said" }
+    ]},
+    { id: 7, text: "Your honest relationship to rules:", options: [
+      { el: "wood",  val: "S", text: "Speed limits; I break the dumb ones without guilt" },
+      { el: "fire",  val: "S", text: "Mood-killers; I would rather charm my way around them" },
+      { el: "earth", val: "M", text: "How we keep each other safe; I uphold the caring ones" },
+      { el: "metal", val: "M", text: "Mostly written for reasons people never bothered to learn" },
+      { el: "water", val: "S", text: "I comply on the surface and keep my real opinion submerged" }
+    ]},
+    { id: 8, text: "What rest looks like when you actually let yourself have it:", options: [
+      { el: "wood",  val: "N", text: "A different kind of doing; stillness is not rest to me" },
+      { el: "fire",  val: "M", text: "A full table, laughter, people I love" },
+      { el: "earth", val: "S", text: "Hard to take until everyone else is settled first" },
+      { el: "metal", val: "S", text: "Impossible inside chaos; order first, then I can stop" },
+      { el: "water", val: "M", text: "Silence, one idea, nobody talking" }
+    ]},
+    { id: 9, text: "Someone you love is struggling. Your first instinct:", options: [
+      { el: "wood",  val: "M", text: "Remove the obstacle for them; act on their behalf" },
+      { el: "fire",  val: "M", text: "Lift them; energize, encourage, make them laugh again" },
+      { el: "earth", val: "M", text: "Hold them; presence, food, time, no agenda" },
+      { el: "metal", val: "M", text: "Solve it; find the real problem and hand them the correct plan" },
+      { el: "water", val: "M", text: "Understand it; ask the one question that reframes everything" }
+    ]},
+    { id: 10, text: "The fear you would least like to admit out loud:", options: [
+      { el: "wood",  val: "N", text: "Being trapped, stalled, made to wait forever" },
+      { el: "fire",  val: "N", text: "Being unloved, unfelt, left outside the warmth" },
+      { el: "earth", val: "N", text: "Being needed by no one, or failing the people I hold" },
+      { el: "metal", val: "N", text: "Being exposed as flawed under real scrutiny" },
+      { el: "water", val: "N", text: "Being fully seen and then drained, or finding out none of it meant anything" }
+    ]}
+  ]
+};
+
+/* ================================================================
+   ENGINE · pure functions only. No DOM, no storage, no side effects.
+
+   Two documented interpretations where the spec is silent:
+   1. "Also me" answers count toward maturity hits at weight 1
+      (picks count at weight 2), mirroring the 2/1 point split.
+   2. `overall` is normalized over the elements that have valenced
+      hits: sum(pct*maturity) / sum(pct). Without this, an element
+      scored only through neutral options would silently drag a
+      mature profile toward Reactive.
+   ================================================================ */
+const ELS = ["wood", "fire", "earth", "metal", "water"];
+const THRESH = { secondary: 0.18, grounded: 0.62, reactive: 0.42 };
+
+function optionByElement(qid, el) {
+  const q = CONTENT.questions.find(function (q) { return q.id === qid; });
+  if (!q) return null;
+  return q.options.find(function (o) { return o.el === el; }) || null;
+}
+
+function round2(v) { return Math.round(v * 100) / 100; }
+
+/* Largest-remainder rounding so displayed percentages sum to 100. */
+function roundPcts(pctF) {
+  const rows = ELS.map(function (e) {
+    const v = (pctF[e] || 0) * 100;
+    return { e: e, fl: Math.floor(v), rem: v - Math.floor(v) };
+  });
+  const out = {};
+  let used = rows.reduce(function (t, r) { return t + r.fl; }, 0);
+  if (used === 0 && rows.every(function (r) { return r.rem === 0; })) {
+    rows.forEach(function (r) { out[r.e] = 0; });
+    return out;
+  }
+  let left = 100 - used;
+  rows.slice().sort(function (a, b) {
+    return b.rem - a.rem || ELS.indexOf(a.e) - ELS.indexOf(b.e);
+  }).forEach(function (r) { r.add = left > 0 ? 1 : 0; if (left > 0) left--; });
+  rows.forEach(function (r) { out[r.e] = r.fl + (r.add || 0); });
+  return out;
+}
+
+/* answers: [{ q, pick, also? }] with valences derived from CONTENT. */
+function scoreAnswers(answers) {
+  const pts = {}, mHits = {}, sHits = {};
+  ELS.forEach(function (e) { pts[e] = 0; mHits[e] = 0; sHits[e] = 0; });
+  let total = 0;
+
+  answers.forEach(function (a) {
+    const pickOpt = optionByElement(a.q, a.pick);
+    if (!pickOpt) return;
+    pts[a.pick] += 2; total += 2;
+    if (pickOpt.val === "M") mHits[a.pick] += 2;
+    else if (pickOpt.val === "S") sHits[a.pick] += 2;
+
+    if (a.also && a.also !== a.pick) {
+      const alsoOpt = optionByElement(a.q, a.also);
+      if (alsoOpt) {
+        pts[a.also] += 1; total += 1;
+        if (alsoOpt.val === "M") mHits[a.also] += 1;
+        else if (alsoOpt.val === "S") sHits[a.also] += 1;
+      }
+    }
+  });
+
+  const pctF = {};
+  ELS.forEach(function (e) { pctF[e] = total > 0 ? pts[e] / total : 0; });
+
+  const order = ELS.slice().sort(function (a, b) {
+    return pctF[b] - pctF[a] || ELS.indexOf(a) - ELS.indexOf(b);
+  });
+  const primary = order[0];
+  const secondary = pctF[order[1]] >= THRESH.secondary ? order[1] : null;
+
+  const perElement = {};
+  let num = 0, den = 0;
+  ELS.forEach(function (e) {
+    const hits = mHits[e] + sHits[e];
+    if (hits > 0) {
+      const m = mHits[e] / hits;
+      perElement[e] = round2(m);
+      num += pctF[e] * m;
+      den += pctF[e];
+    }
+  });
+  const overallF = den > 0 ? num / den : 0.5;
+  const state = overallF >= THRESH.grounded ? "grounded"
+              : overallF <= THRESH.reactive ? "reactive"
+              : "integrating";
+
+  return {
+    pct: roundPcts(pctF),
+    pctF: pctF,
+    primary: primary,
+    secondary: secondary,
+    maturity: { overall: round2(overallF), overallF: overallF, perElement: perElement },
+    state: state
+  };
+}
+
+/* The stored/shareable shape from SPEC section 5 (derived floats stripped). */
+function publicScores(s) {
+  return {
+    pct: s.pct,
+    primary: s.primary,
+    secondary: s.secondary,
+    maturity: { overall: s.maturity.overall, perElement: s.maturity.perElement },
+    state: s.state
+  };
+}
+
+function encodeBlueprint(s) {
+  const json = JSON.stringify(publicScores(s));
+  const b64 = btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return "EB1." + b64;
+}
+
+/* ================================================================
+   FIXTURES · ?debug=1 runs these and asserts to the console.
+   Expected values are hand-computed from the bank keys above.
+   ================================================================ */
+const FIXTURES = [
+  {
+    name: "all-fire, no alsos: pure primary, grounded at 0.625",
+    answers: [1,2,3,4,5,6,7,8,9,10].map(function (q) { return { q: q, pick: "fire" }; }),
+    expect: { primary: "fire", secondary: null, state: "grounded", overall: 0.625, pct: { fire: 100 } }
+  },
+  {
+    name: "wood 60 / water 40: integrating at 0.60",
+    answers: [
+      { q: 1, pick: "wood" }, { q: 2, pick: "wood" }, { q: 3, pick: "wood" },
+      { q: 4, pick: "wood" }, { q: 5, pick: "wood" }, { q: 6, pick: "water" },
+      { q: 7, pick: "water" }, { q: 8, pick: "water" }, { q: 9, pick: "water" },
+      { q: 10, pick: "wood" }
+    ],
+    expect: { primary: "wood", secondary: "water", state: "integrating", overall: 0.60, pct: { wood: 60, water: 40 } }
+  },
+  {
+    name: "shadow metal 50 / water 40 / earth 10: reactive at 0.40",
+    answers: [
+      { q: 1, pick: "water" }, { q: 2, pick: "metal" }, { q: 3, pick: "metal" },
+      { q: 4, pick: "earth" }, { q: 5, pick: "metal" }, { q: 6, pick: "water" },
+      { q: 7, pick: "water" }, { q: 8, pick: "metal" }, { q: 9, pick: "water" },
+      { q: 10, pick: "metal" }
+    ],
+    expect: { primary: "metal", secondary: "water", state: "reactive", overall: 0.40, pct: { metal: 50, water: 40, earth: 10 } }
+  },
+  {
+    name: "earth picks + water alsos: also-me weighting, grounded at 0.625",
+    answers: [1,2,3,4,5,6,7,8,9,10].map(function (q) { return { q: q, pick: "earth", also: "water" }; }),
+    expect: { primary: "earth", secondary: "water", state: "grounded", overall: 0.625, pct: { earth: 67, water: 33 } }
+  }
+];
+
+function runFixtures() {
+  let pass = 0;
+  console.group("Elemental Blueprint :: fixture harness");
+
+  /* bank coverage: every element needs >= 3 M and >= 3 S options */
+  ELS.forEach(function (e) {
+    let m = 0, s = 0;
+    CONTENT.questions.forEach(function (q) {
+      q.options.forEach(function (o) {
+        if (o.el === e && o.val === "M") m++;
+        if (o.el === e && o.val === "S") s++;
+      });
+    });
+    console.assert(m >= 3 && s >= 3, "COVERAGE FAIL: " + e + " has " + m + " M / " + s + " S options");
+  });
+
+  FIXTURES.forEach(function (f) {
+    const s = scoreAnswers(f.answers);
+    const pctSum = ELS.reduce(function (t, e) { return t + s.pct[e]; }, 0);
+    let ok = s.primary === f.expect.primary
+      && s.secondary === f.expect.secondary
+      && s.state === f.expect.state
+      && Math.abs(s.maturity.overallF - f.expect.overall) < 0.005
+      && pctSum === 100;
+    Object.keys(f.expect.pct || {}).forEach(function (e) {
+      if (s.pct[e] !== f.expect.pct[e]) ok = false;
+    });
+    console.assert(ok, "FIXTURE FAIL: " + f.name, { expected: f.expect, got: s });
+    console.log((ok ? "PASS" : "FAIL") + " :: " + f.name +
+      " [primary=" + s.primary + " secondary=" + s.secondary +
+      " state=" + s.state + " overall=" + s.maturity.overallF.toFixed(3) + "]");
+    if (ok) pass++;
+  });
+
+  console.log(pass + "/" + FIXTURES.length + " fixtures passed");
+  console.groupEnd();
+  return pass === FIXTURES.length;
+}
+
+/* ================================================================
+   UI · everything below is impure: DOM, storage, animation.
+   ================================================================ */
+const STORE_KEY = "eb.v1";
+const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const UI = {
+  screen: "landing",
+  qIndex: 0,
+  profile: { name: "", ageBand: null, seeking: null, polarity: null },
+  picks: {},        /* qid -> element */
+  alsos: {},        /* qid -> element */
+  optionOrder: {},  /* qid -> shuffled element order, fixed per session */
+  scores: null
+};
+
+function $(sel) { return document.querySelector(sel); }
+function esc(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* ---------- storage (guarded for private-mode failures) ---------- */
+let memStore = null;
+function saveAll() {
+  const payload = {
+    profile: UI.profile,
+    answers: answerArray(),
+    scores: publicScores(UI.scores),
+    results: { ranked: [], computedAt: "" },
+    meta: { version: 1 }
+  };
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(payload)); }
+  catch (e) { memStore = payload; }
+}
+function loadAll() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* fall through */ }
+  return memStore;
+}
+function eraseAll() {
+  try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+  memStore = null;
+}
+
+function answerArray() {
+  return CONTENT.questions
+    .filter(function (q) { return UI.picks[q.id]; })
+    .map(function (q) {
+      const pick = UI.picks[q.id];
+      const opt = optionByElement(q.id, pick);
+      const row = { q: q.id, pick: pick, pickValence: opt ? opt.val : "N" };
+      if (UI.alsos[q.id]) row.also = UI.alsos[q.id];
+      return row;
+    });
+}
+
+/* Rebuild derived floats when loading the stored public shape. */
+function hydrateScores(stored) {
+  const pctF = {};
+  ELS.forEach(function (e) { pctF[e] = (stored.pct[e] || 0) / 100; });
+  return {
+    pct: stored.pct, pctF: pctF,
+    primary: stored.primary, secondary: stored.secondary,
+    maturity: {
+      overall: stored.maturity.overall,
+      overallF: stored.maturity.overall,
+      perElement: stored.maturity.perElement
+    },
+    state: stored.state
+  };
+}
+
+/* ---------- pentagon SVG ----------
+   Vertex order clockwise from the top follows the Sheng ring:
+   Fire > Earth > Metal > Water > Wood. Each ring segment is a
+   gradient from the element it leaves to the element it feeds,
+   so the generative cycle reads as color flow. The Ke star is
+   the dim chords; the user's data polygon is phosphor white. */
+let svgUid = 0;
+function pentagonSVG(scores, opts) {
+  opts = opts || {};
+  const animate = !!opts.animate && !RM;
+  const labels = opts.labels !== false;
+  const VORDER = ["fire", "earth", "metal", "water", "wood"];
+  const cx = 180, cy = 186, R = 116, LR = R + 36;
+  const verts = VORDER.map(function (e, i) {
+    const a = (-90 + i * 72) * Math.PI / 180;
+    return {
+      e: e,
+      x: cx + R * Math.cos(a), y: cy + R * Math.sin(a),
+      lx: cx + LR * Math.cos(a), ly: cy + LR * Math.sin(a)
+    };
+  });
+  const f = function (n) { return n.toFixed(1); };
+  const uid = "eb" + (++svgUid) + "g";
+
+  let defs = "<defs>";
+  let ring = "";
+  for (let i = 0; i < 5; i++) {
+    const a = verts[i], b = verts[(i + 1) % 5];
+    const gid = uid + i;
+    defs += '<linearGradient id="' + gid + '" gradientUnits="userSpaceOnUse" x1="' + f(a.x) +
+      '" y1="' + f(a.y) + '" x2="' + f(b.x) + '" y2="' + f(b.y) + '">' +
+      '<stop offset="0" stop-color="var(--' + a.e + ')"/>' +
+      '<stop offset="1" stop-color="var(--' + b.e + ')"/></linearGradient>';
+    ring += '<line class="ringseg" x1="' + f(a.x) + '" y1="' + f(a.y) +
+      '" x2="' + f(b.x) + '" y2="' + f(b.y) + '" stroke="url(#' + gid + ')" pathLength="100"' +
+      (animate ? ' style="animation-delay:' + (0.15 + i * 0.16).toFixed(2) + 's"' : "") + "/>";
+  }
+  defs += "</defs>";
+
+  let chords = "";
+  for (let i = 0; i < 5; i++) {
+    const a = verts[i], b = verts[(i + 2) % 5];
+    chords += '<line class="chord" x1="' + f(a.x) + '" y1="' + f(a.y) +
+      '" x2="' + f(b.x) + '" y2="' + f(b.y) + '"/>';
+  }
+
+  let poly = "";
+  if (scores) {
+    const pts = verts.map(function (v) {
+      const r = Math.max(0.03, scores.pctF[v.e] || 0) * R;
+      const a = Math.atan2(v.y - cy, v.x - cx);
+      return f(cx + r * Math.cos(a)) + "," + f(cy + r * Math.sin(a));
+    }).join(" ");
+    poly = '<polygon class="poly" points="' + pts + '"/>';
+  }
+
+  let labelsSvg = "";
+  if (labels) {
+    verts.forEach(function (v) {
+      const sq = '<rect class="vsq" x="' + f(v.x - 3.5) + '" y="' + f(v.y - 3.5) +
+        '" width="7" height="7" fill="var(--' + v.e + ')"/>';
+      let txt = "";
+      if (scores) {
+        /* data-count only exists in animate mode, so a stale
+           reveal timer can never touch a static chart */
+        const pctText = animate
+          ? '<text class="vpct" x="' + f(v.lx) + '" y="' + f(v.ly + 13) +
+            '" text-anchor="middle" data-count="' + scores.pct[v.e] + '">0%</text>'
+          : '<text class="vpct" x="' + f(v.lx) + '" y="' + f(v.ly + 13) +
+            '" text-anchor="middle">' + scores.pct[v.e] + "%</text>";
+        txt = '<g class="vlabel"><text class="vname" x="' + f(v.lx) + '" y="' + f(v.ly - 9) +
+          '" text-anchor="middle" fill="var(--' + v.e + ')">' + CONTENT.elements[v.e].name.toUpperCase() +
+          "</text>" + pctText + "</g>";
+      } else {
+        txt = '<text class="vname vlabel" x="' + f(v.lx) + '" y="' + f(v.ly + 4) +
+          '" text-anchor="middle" fill="var(--' + v.e + ')">' + CONTENT.elements[v.e].name.toUpperCase() + "</text>";
+      }
+      labelsSvg += sq + txt;
+    });
+  }
+
+  const size = opts.size || 340;
+  return '<svg class="penta' + (animate ? " animate" : "") + '" viewBox="0 0 360 372" ' +
+    'style="width:min(86vw,' + size + 'px)" role="img" aria-label="' + esc(opts.aria || CONTENT.reveal.chartAria) + '">' +
+    defs + ring + chords + poly + labelsSvg + "</svg>";
+}
+
+/* ---------- screens ---------- */
+function go(screen) {
+  UI.screen = screen;
+  render();
+}
+
+function render() {
+  /* invalidate any timers/rAF loops the previous screen left behind */
+  UI._gen = (UI._gen || 0) + 1;
+  (UI._timers || []).forEach(clearTimeout);
+  UI._timers = [];
+  window.scrollTo(0, 0);
+  const fn = {
+    landing: renderLanding, framing: renderFraming, about: renderAbout,
+    quiz: renderQuiz, reveal: renderReveal, blueprint: renderBlueprint
+  }[UI.screen];
+  fn();
+  renderFooter();
+  const h = $("#app h1, #app h2");
+  if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+}
+
+function renderLanding() {
+  $("#app").innerHTML =
+    '<div class="screen center" style="padding-top:9vh">' +
+      '<div style="margin-bottom:26px">' + pentagonSVG(null, { size: 120, aria: "The five-element pentagon" }) + "</div>" +
+      '<h1 class="display">' + CONTENT.meta.app + "</h1>" +
+      '<p class="lede" style="margin:16px auto 34px;max-width:34ch">' + CONTENT.meta.tagline + "</p>" +
+      '<button class="btn" id="begin">Begin</button>' +
+      '<p class="micro" style="margin-top:26px">' + CONTENT.meta.landingNote + "</p>" +
+    "</div>";
+  $("#begin").addEventListener("click", function () { go("framing"); });
+}
+
+function renderFraming() {
+  $("#app").innerHTML =
+    '<div class="screen" style="padding-top:5vh">' +
+      '<p class="lbl">' + CONTENT.framing.label + "</p>" +
+      '<h2 class="display" style="margin:10px 0 22px">' + CONTENT.framing.title + "</h2>" +
+      CONTENT.framing.paras.map(function (p) {
+        return '<p style="margin-bottom:18px;color:var(--ink-70);line-height:1.75">' + p + "</p>";
+      }).join("") +
+      '<div style="margin-top:30px"><button class="btn" id="cont">' + CONTENT.framing.button + "</button></div>" +
+    "</div>";
+  $("#cont").addEventListener("click", function () { go("about"); });
+}
+
+function renderAbout() {
+  const a = CONTENT.about;
+  function chipRow(items, key) {
+    return '<div class="chips" data-key="' + key + '">' + items.map(function (it) {
+      const on = UI.profile[key] === it.value;
+      return '<button class="chip" data-value="' + esc(it.value) + '" aria-pressed="' + on + '">' + esc(it.label) + "</button>";
+    }).join("") + "</div>";
+  }
+  $("#app").innerHTML =
+    '<div class="screen" style="padding-top:4vh">' +
+      '<p class="lbl">' + a.label + "</p>" +
+      '<h2 class="display" style="margin:10px 0 8px">' + a.title + "</h2>" +
+      '<p style="color:var(--ink-70)">' + a.intro + "</p>" +
+      '<div class="field"><label class="lbl" for="nm" style="display:block;margin-bottom:10px">' + a.nameLabel + "</label>" +
+        '<input class="name" id="nm" maxlength="24" autocomplete="off" value="' + esc(UI.profile.name) + '"></div>' +
+      '<div class="field"><p class="lbl">' + a.agePrompt + "</p>" + chipRow(a.ageBands, "ageBand") + "</div>" +
+      '<div class="field"><p class="lbl">' + a.seekingPrompt + "</p>" + chipRow(a.seekingOptions, "seeking") +
+        '<p class="note">' + a.seekingNote + "</p></div>" +
+      '<div class="field"><p class="lbl">' + a.polarityPrompt + "</p>" + chipRow(a.polarityOptions, "polarity") + "</div>" +
+      '<div style="margin-top:26px"><button class="btn wide" id="start" disabled>' + a.button + "</button></div>" +
+    "</div>";
+
+  function refresh() {
+    document.querySelectorAll(".chips").forEach(function (row) {
+      const key = row.dataset.key;
+      row.querySelectorAll(".chip").forEach(function (c) {
+        c.setAttribute("aria-pressed", String(UI.profile[key] === c.dataset.value));
+      });
+    });
+    $("#start").disabled = !(UI.profile.ageBand && UI.profile.seeking && UI.profile.polarity);
+  }
+  document.querySelectorAll(".chips .chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      UI.profile[c.parentElement.dataset.key] = c.dataset.value;
+      refresh();
+    });
+  });
+  $("#nm").addEventListener("input", function () { UI.profile.name = $("#nm").value.trim(); });
+  $("#start").addEventListener("click", function () { go("quiz"); });
+  refresh();
+}
+
+function renderQuiz() {
+  const q = CONTENT.questions[UI.qIndex];
+  if (!UI.optionOrder[q.id]) {
+    UI.optionOrder[q.id] = shuffle(q.options.map(function (o) { return o.el; }));
+  }
+  const order = UI.optionOrder[q.id];
+  const nn = function (n) { return (n < 10 ? "0" : "") + n; };
+
+  const dots = CONTENT.questions.map(function (_, i) {
+    return "<i" + (i === UI.qIndex ? ' class="on"' : (i < UI.qIndex ? ' class="done"' : "")) + "></i>";
+  }).join("");
+
+  const opts = order.map(function (el) {
+    const o = q.options.find(function (o) { return o.el === el; });
+    const isPick = UI.picks[q.id] === el;
+    const isAlso = UI.alsos[q.id] === el;
+    const cls = "opt" + (isPick ? " pick" : "") + (isAlso ? " also" : "");
+    const tag = isPick ? '<span class="tag">' + CONTENT.quiz.pickTag + "</span>"
+             : isAlso ? '<span class="tag">' + CONTENT.quiz.alsoTag + "</span>" : "";
+    return '<button class="' + cls + '" data-el="' + el + '" aria-pressed="' + isPick + '">' +
+      esc(o.text) + tag + "</button>";
+  }).join("");
+
+  $("#app").innerHTML =
+    '<div class="screen">' +
+      '<div class="qhead">' +
+        '<button class="linkbtn" id="back">' + CONTENT.quiz.back + "</button>" +
+        '<span class="qnum" aria-label="Question ' + (UI.qIndex + 1) + " " + CONTENT.quiz.counterOf + " " + CONTENT.questions.length + '">' +
+          nn(UI.qIndex + 1) + " / " + nn(CONTENT.questions.length) + "</span>" +
+      "</div>" +
+      '<div class="dots" aria-hidden="true">' + dots + "</div>" +
+      '<h2 class="qtext">' + esc(q.text) + "</h2>" +
+      "<div>" + opts + "</div>" +
+      '<p class="hint">' + CONTENT.quiz.hint + "</p>" +
+      '<div class="qnav"><button class="btn wide" id="next"' + (UI.picks[q.id] ? "" : " disabled") + ">" +
+        (UI.qIndex === CONTENT.questions.length - 1 ? CONTENT.quiz.finish : CONTENT.quiz.next) +
+      "</button></div>" +
+    "</div>";
+
+  function setPick(el) {
+    UI.picks[q.id] = el;
+    if (UI.alsos[q.id] === el) delete UI.alsos[q.id];
+    renderQuiz();
+  }
+  function toggleAlso(el) {
+    if (UI.picks[q.id] === el) return;
+    if (UI.alsos[q.id] === el) delete UI.alsos[q.id];
+    else UI.alsos[q.id] = el;
+    renderQuiz();
+  }
+
+  document.querySelectorAll(".opt").forEach(function (btn) {
+    const el = btn.dataset.el;
+    let timer = null;
+    btn.addEventListener("pointerdown", function () {
+      UI._suppressClick = false;
+      timer = setTimeout(function () {
+        /* toggleAlso re-renders and replaces this node, so the flag
+           must outlive it: the trailing click lands on the fresh
+           node and is swallowed there */
+        UI._suppressClick = true;
+        toggleAlso(el);
+      }, 450);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) {
+      btn.addEventListener(ev, function () { clearTimeout(timer); });
+    });
+    btn.addEventListener("click", function () {
+      if (UI._suppressClick) { UI._suppressClick = false; return; }
+      setPick(el);
+    });
+    btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    btn.addEventListener("keydown", function (e) {
+      if (e.key === "a" || e.key === "A") { e.preventDefault(); toggleAlso(el); }
+    });
+  });
+
+  $("#back").addEventListener("click", function () {
+    if (UI.qIndex > 0) { UI.qIndex--; renderQuiz(); renderFooter(); }
+    else go("about");
+  });
+  $("#next").addEventListener("click", function () {
+    if (!UI.picks[q.id]) return;
+    if (UI.qIndex < CONTENT.questions.length - 1) { UI.qIndex++; renderQuiz(); renderFooter(); }
+    else finishQuiz();
+  });
+}
+
+function finishQuiz() {
+  UI.scores = scoreAnswers(answerArray());
+  saveAll();
+  go("reveal");
+}
+
+function renderReveal() {
+  const s = UI.scores;
+  const el = CONTENT.elements[s.primary];
+  const st = CONTENT.states[s.state];
+  const name = UI.profile.name;
+  const secondaryLine = s.secondary
+    ? '<p class="mono fin" style="--d:2.75s;font-size:13px;color:var(--ink-70);margin-top:10px">' +
+      CONTENT.reveal.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
+    : "";
+
+  $("#app").innerHTML =
+    '<div class="screen center" style="padding-top:2vh">' +
+      '<p class="lbl" style="margin-bottom:18px">' + CONTENT.reveal.label + "</p>" +
+      pentagonSVG(s, { animate: true }) +
+      '<div style="margin-top:26px">' +
+        '<p class="lbl fin" style="--d:2.4s">' + CONTENT.reveal.primaryLabel + "</p>" +
+        '<h2 class="display revealname fin" style="--d:2.5s;color:var(--' + s.primary + '-t)">' + el.name + "</h2>" +
+        '<p class="mono fin" style="--d:2.65s;font-size:13px;letter-spacing:.08em;color:var(--ink-70)">' + el.archetype + "</p>" +
+        secondaryLine +
+        '<div class="fin" style="--d:3s;margin-top:24px"><span class="statechip">' + st.name + "</span>" +
+          '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p></div>" +
+        '<p class="portrait fin" style="--d:3.4s">' + (name ? esc(name) + ". " : "") + el.portrait + "</p>" +
+        '<div class="fin" style="--d:3.8s;margin-top:8px"><button class="btn" id="open">' + CONTENT.reveal.button + "</button></div>" +
+      "</div>" +
+    "</div>";
+
+  if (!RM) {
+    const gen = UI._gen;
+    UI._timers.push(setTimeout(function () {
+      const nodes = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+      const t0 = performance.now(), dur = 950;
+      function step(t) {
+        if (UI._gen !== gen) return; /* screen changed; stop */
+        const k = Math.min(1, (t - t0) / dur);
+        const ease = 1 - Math.pow(1 - k, 3);
+        nodes.forEach(function (n) {
+          n.textContent = Math.round(ease * Number(n.dataset.count)) + "%";
+        });
+        if (k < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+      /* rAF can be suspended (hidden tab, some webviews); always settle */
+      UI._timers.push(setTimeout(function () {
+        nodes.forEach(function (n) { n.textContent = n.dataset.count + "%"; });
+      }, dur + 300));
+    }, 1400));
+  }
+  $("#open").addEventListener("click", function () { go("blueprint"); });
+}
+
+function renderBlueprint() {
+  const s = UI.scores;
+  const el = CONTENT.elements[s.primary];
+  const st = CONTENT.states[s.state];
+  const b = CONTENT.blueprint;
+  const barColor = "var(--" + s.primary + ")";
+
+  function section(label, inner) {
+    return '<div class="section"><p class="lbl">' + label + "</p>" +
+      '<div class="rule" style="background:' + barColor + '"></div>' + inner + "</div>";
+  }
+  const secondaryLine = s.secondary
+    ? '<p class="mono" style="font-size:13px;color:var(--ink-70);margin-top:8px">' +
+      CONTENT.reveal.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
+    : "";
+
+  $("#app").innerHTML =
+    '<div class="screen">' +
+      '<div class="bphead" style="padding-top:2vh">' +
+        '<p class="lbl">' + b.label + (UI.profile.name ? " · " + esc(UI.profile.name) : "") + "</p>" +
+        '<div style="margin:20px 0 6px">' + pentagonSVG(s, { size: 250 }) + "</div>" +
+        '<h2 class="display bpname" style="color:var(--' + s.primary + '-t)">' + el.name + "</h2>" +
+        '<p class="mono" style="font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:6px">' + el.archetype + "</p>" +
+        secondaryLine +
+        '<div style="margin-top:18px"><span class="statechip">' + st.name + "</span></div>" +
+        '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p>" +
+      "</div>" +
+      '<p class="portrait">' + el.portrait + "</p>" +
+      section(b.driveLabel, '<p style="font-size:16px;line-height:1.7">' + el.drive + "</p>") +
+      section(b.giftsLabel, '<ul class="plain">' + el.gifts.map(function (g) { return "<li>" + g + "</li>"; }).join("") + "</ul>") +
+      section(b.registersLabel,
+        '<div class="cols">' +
+          '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.matureLabel + '</p><ul class="plain">' +
+            el.mature.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
+          '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.shadowLabel + '</p><ul class="plain">' +
+            el.shadow.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
+        "</div>") +
+      section(b.stressLabel,
+        '<p class="stressname">' + el.stress.name + "</p>" +
+        '<p style="font-size:15.5px;line-height:1.7;color:var(--ink-70)">' + el.stress.body + "</p>") +
+      section(b.practicesLabel,
+        '<ol class="practices">' + el.practices.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>") +
+    "</div>";
+}
+
+/* ---------- footer + toast ---------- */
+function renderFooter() {
+  const f = CONTENT.footer;
+  const hasResult = !!UI.scores && (UI.screen === "blueprint" || UI.screen === "reveal");
+  $("#foot").innerHTML =
+    (hasResult
+      ? '<div class="footrow">' +
+          '<button class="linkbtn" id="f-retake">' + f.retake + "</button>" +
+          '<button class="linkbtn" id="f-copy">' + f.copyCode + "</button>" +
+          '<button class="linkbtn" id="f-erase">' + f.erase + "</button>" +
+        "</div>"
+      : "") +
+    '<p class="disclaimer">' + CONTENT.meta.disclaimer + " " + CONTENT.meta.privacyNote + "</p>";
+
+  if (hasResult) {
+    $("#f-retake").addEventListener("click", function () {
+      if (!window.confirm(f.confirmRetake)) return;
+      UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0;
+      go("quiz");
+    });
+    $("#f-copy").addEventListener("click", function () {
+      const code = encodeBlueprint(UI.scores);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function () { toast(f.copied); }, function () { toast(code); });
+      } else { toast(code); }
+    });
+    $("#f-erase").addEventListener("click", function () {
+      if (!window.confirm(f.confirmErase)) return;
+      eraseAll();
+      window.location.reload();
+    });
+  }
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.hidden = true; }, 2200);
+}
+
+/* ---------- init ---------- */
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("debug")) {
+    runFixtures();
+    window.EB = { scoreAnswers: scoreAnswers, encodeBlueprint: encodeBlueprint, FIXTURES: FIXTURES, CONTENT: CONTENT };
+  }
+  const saved = loadAll();
+  if (saved && saved.meta && saved.meta.version === 1 && saved.scores && saved.scores.primary &&
+      saved.scores.pct && saved.scores.maturity) {
+    try {
+      UI.profile = saved.profile || UI.profile;
+      UI.scores = hydrateScores(saved.scores);
+      go("blueprint");
+    } catch (e) {
+      /* structurally corrupt payload: never a blank page */
+      go("landing");
+    }
+  } else {
+    go("landing");
+  }
+})();
+</script>
+</body>
+</html>
