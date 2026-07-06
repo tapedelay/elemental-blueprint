@@ -20,15 +20,15 @@
    phosphor) so CONTENT and ENGINE stay untouched by the reskin.
    ============================================================ */
 :root{
-  --paper:#08090A;
-  --ink:#E8EDEA;
-  --ink-70:rgba(232,237,234,.75);
-  --ink-55:rgba(232,237,234,.62);
-  --ink-25:rgba(232,237,234,.30);
-  --ink-12:rgba(232,237,234,.16);
-  --ink-07:rgba(232,237,234,.08);
-  /* phosphor set: every one holds AA against the void */
-  --wood:#4CC08A; --fire:#FF5C3D; --earth:#F0B43C; --metal:#9FB0B8; --water:#4FA8E8;
+  --paper:#000000;
+  --ink:#F4F7F5;
+  --ink-70:rgba(244,247,245,.84);
+  --ink-55:rgba(244,247,245,.70);
+  --ink-25:rgba(244,247,245,.38);
+  --ink-12:rgba(244,247,245,.22);
+  --ink-07:rgba(244,247,245,.10);
+  /* phosphor set: every one holds AA against true black */
+  --wood:#54D298; --fire:#FF6247; --earth:#F6BC42; --metal:#AEC0C9; --water:#5CB4F5;
   --wood-t:var(--wood); --fire-t:var(--fire); --earth-t:var(--earth); --metal-t:var(--metal); --water-t:var(--water);
   --mono:'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace;
   --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -101,7 +101,10 @@ input.name:focus{border-color:var(--ink)}
 .opt::before{position:absolute;left:13px;top:50%;transform:translateY(-50%);
   font:700 14px/1 var(--mono);color:var(--ink)}
 .opt:hover{border-color:var(--ink-70)}
-.opt.pick{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--ink-07)}
+/* Saturn mesh transparency on the picked answer */
+.opt.pick{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);
+  background-image:repeating-conic-gradient(rgba(244,247,245,.12) 0% 25%,transparent 0% 50%);
+  background-size:4px 4px}
 .opt.pick::before{content:">"}
 .opt.also{border-color:var(--ink);border-style:dashed}
 .opt.also::before{content:"+"}
@@ -119,11 +122,13 @@ input.name:focus{border-color:var(--ink)}
 .penta .vpct{font-size:20px;font-weight:700;fill:var(--ink)}
 .penta .ringseg{stroke-width:2;shape-rendering:crispEdges}
 .penta .chord{stroke:var(--ink);stroke-opacity:.15;stroke-width:1;shape-rendering:crispEdges}
-.penta .poly{fill:rgba(232,237,234,.08);stroke:var(--ink);stroke-width:2;stroke-linejoin:miter;shape-rendering:crispEdges}
+.penta .poly{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:miter;shape-rendering:crispEdges}
+.penta .facet{shape-rendering:crispEdges}
+.penta .spoke{stroke:rgba(244,247,245,.28);stroke-width:1;shape-rendering:crispEdges}
 .penta .vsq{shape-rendering:crispEdges}
 .penta.animate .ringseg{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .3s linear forwards}
 .penta.animate .chord{opacity:0;animation:fin .4s ease 1.05s forwards}
-.penta.animate .poly{transform-box:fill-box;transform-origin:center;opacity:0;transform:scale(.55);
+.penta.animate .datapoly{transform-box:fill-box;transform-origin:center;opacity:0;transform:scale(.55);
   animation:pop .7s cubic-bezier(.2,.8,.3,1) 1.35s forwards}
 .penta.animate .vlabel{opacity:0;animation:fin .5s ease 1.35s forwards}
 
@@ -862,12 +867,26 @@ function pentagonSVG(scores, opts) {
 
   let poly = "";
   if (scores) {
-    const pts = verts.map(function (v) {
+    /* Saturn-style lo-poly: the data shape is five flat facets
+       (center > vertex i > vertex i+1), each shaded by the mean
+       share of the two elements it spans, plus wireframe spokes.
+       The flat shading is literally the data. */
+    const dp = verts.map(function (v) {
       const r = Math.max(0.03, scores.pctF[v.e] || 0) * R;
       const a = Math.atan2(v.y - cy, v.x - cx);
-      return f(cx + r * Math.cos(a)) + "," + f(cy + r * Math.sin(a));
-    }).join(" ");
-    poly = '<polygon class="poly" points="' + pts + '"/>';
+      return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    });
+    let facets = "", spokes = "";
+    for (let i = 0; i < 5; i++) {
+      const a = dp[i], b = dp[(i + 1) % 5];
+      const share = ((scores.pctF[verts[i].e] || 0) + (scores.pctF[verts[(i + 1) % 5].e] || 0)) / 2;
+      const alpha = Math.min(0.6, 0.05 + 0.6 * share).toFixed(3);
+      facets += '<polygon class="facet" points="' + cx + ',' + cy + ' ' + f(a.x) + ',' + f(a.y) +
+        ' ' + f(b.x) + ',' + f(b.y) + '" fill="rgba(244,247,245,' + alpha + ')"/>';
+      spokes += '<line class="spoke" x1="' + cx + '" y1="' + cy + '" x2="' + f(a.x) + '" y2="' + f(a.y) + '"/>';
+    }
+    const pts = dp.map(function (p) { return f(p.x) + "," + f(p.y); }).join(" ");
+    poly = '<g class="datapoly">' + facets + spokes + '<polygon class="poly" points="' + pts + '"/></g>';
   }
 
   let labelsSvg = "";
