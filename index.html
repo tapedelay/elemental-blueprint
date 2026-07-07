@@ -157,6 +157,17 @@ ol.practices li::before{content:"0" counter(pr);position:absolute;left:0;top:12p
   font:700 13px/1 var(--mono);color:var(--ink-55);letter-spacing:.05em}
 .stressname{font:700 13px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;margin-bottom:8px}
 
+/* ask: local Claude companion */
+.askrow{display:flex;gap:10px;margin-top:14px}
+.askin{flex:1;min-width:0;font:400 15px/1.4 var(--body);color:var(--ink);background:transparent;
+  border:1px solid var(--ink-25);border-radius:0;padding:13px 14px;transition:border-color var(--fast)}
+.askin:focus{border-color:var(--ink)}
+.btn.sm{padding:13px 18px}
+.askq{font:500 13px/1.6 var(--mono);color:var(--ink-70);margin:18px 0 8px;overflow-wrap:break-word}
+.aska{border-left:2px solid var(--ink-25);padding:2px 0 2px 14px;font-size:15.5px;line-height:1.7}
+.aska p{margin-bottom:10px}
+.aska p:last-child{margin-bottom:0}
+
 /* footer */
 footer#foot{border-top:1px solid var(--ink-12)}
 .footrow{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:14px}
@@ -272,6 +283,17 @@ const CONTENT = {
     copied: "Code copied",
     confirmRetake: "Retake the assessment? Your current result will be replaced when you finish.",
     confirmErase: "Erase everything this app has stored on this device?"
+  },
+
+  ask: {
+    label: "Ask",
+    intro: "Follow-up questions about your result, answered by Claude on this machine through your own subscription. Your question and your scores go to Claude; nothing else leaves this computer.",
+    placeholder: "Ask about your pattern, a flow, a practice...",
+    button: "Ask",
+    thinking: "Thinking...",
+    offline: "Asking needs the local companion. Start the app with launch.bat (it runs server.js), then this section wakes up.",
+    error: "No answer came back. Check that Claude Code is installed and signed in, then try again.",
+    rules: "You are the in-app voice of Elemental Blueprint, a secular self-reflection tool that treats the Five Elements (Wood, Fire, Earth, Metal, Water) strictly as a behavioral pattern language: drives, stress responses, repair. Hard rules: no astrology or destiny language, no chakra talk, no medical or diagnostic claims, never pathologize; maturity states (Grounded, Integrating, Reactive) are weather, not identity. Voice: warm, plain, precise, concrete; no emoji; no em dashes. Answer in under 180 words unless asked for more."
   },
 
   states: {
@@ -748,7 +770,8 @@ const UI = {
   picks: {},        /* qid -> element */
   alsos: {},        /* qid -> element */
   optionOrder: {},  /* qid -> shuffled element order, fixed per session */
-  scores: null
+  scores: null,
+  askLog: []        /* in-memory only; asked questions are not persisted */
 };
 
 function $(sel) { return document.querySelector(sel); }
@@ -1195,7 +1218,103 @@ function renderBlueprint() {
         '<p style="font-size:15.5px;line-height:1.7;color:var(--ink-70)">' + el.stress.body + "</p>") +
       section(b.practicesLabel,
         '<ol class="practices">' + el.practices.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>") +
+      askSectionHTML() +
     "</div>";
+  setupAsk();
+}
+
+/* ---------- ask: follow-up questions via the local companion ----------
+   The static app stays self-contained; when server.js is running it
+   bridges /api/ask to the Claude Code CLI on the user's own login. */
+function askSectionHTML() {
+  const a = CONTENT.ask;
+  return '<div class="section" id="asksec"><p class="lbl">' + a.label + "</p>" +
+    '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +
+    '<p class="micro" id="askintro">' + a.intro + "</p>" +
+    '<div id="asklog"></div>' +
+    '<form id="askform" hidden><div class="askrow">' +
+      '<input class="askin" id="askin" maxlength="400" autocomplete="off" placeholder="' + a.placeholder + '">' +
+      '<button class="btn sm" id="askbtn" type="submit">' + a.button + "</button>" +
+    "</div></form>" +
+    '<p class="micro" id="askstatus" hidden></p></div>';
+}
+
+function buildAskPrompt(question) {
+  const canon = ELS.map(function (e) {
+    const el = CONTENT.elements[e];
+    return el.name + " (" + el.archetype + "): " + el.drive + " Stress signature: " + el.stress.name + ".";
+  }).join("\n");
+  const hist = UI.askLog.slice(-3).map(function (x) {
+    return "Q: " + x.q + "\nA: " + x.a;
+  }).join("\n\n");
+  return CONTENT.ask.rules +
+    "\n\nTHE FRAMEWORK\n" + canon +
+    "\n\nTHE USER'S RESULT (JSON)\n" + JSON.stringify(publicScores(UI.scores)) +
+    (UI.profile.name ? "\nThe user goes by " + UI.profile.name + "." : "") +
+    (hist ? "\n\nRECENT EXCHANGES\n" + hist : "") +
+    "\n\nTHE USER'S QUESTION\n" + question;
+}
+
+function renderAskLog() {
+  const box = $("#asklog");
+  if (!box) return;
+  box.innerHTML = UI.askLog.map(function (x) {
+    const paras = esc(x.a).split(/\n\n+/).map(function (p) {
+      return "<p>" + p.replace(/\n/g, "<br>") + "</p>";
+    }).join("");
+    return '<p class="askq">&gt; ' + esc(x.q) + '</p><div class="aska">' + paras + "</div>";
+  }).join("");
+}
+
+function setupAsk() {
+  const a = CONTENT.ask;
+  const form = $("#askform"), input = $("#askin"), btn = $("#askbtn"),
+        intro = $("#askintro"), status = $("#askstatus");
+  renderAskLog();
+  if (window.location.protocol === "file:") { intro.textContent = a.offline; return; }
+  const ctl = new AbortController();
+  const t = setTimeout(function () { ctl.abort(); }, 2500);
+  fetch("/api/health", { signal: ctl.signal }).then(function (r) {
+    clearTimeout(t);
+    if (r.ok) form.hidden = false;
+    else intro.textContent = a.offline;
+  }, function () {
+    clearTimeout(t);
+    intro.textContent = a.offline;
+  });
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    const q = input.value.trim();
+    if (!q || UI._askBusy) return;
+    UI._askBusy = true;
+    btn.disabled = true;
+    status.hidden = false;
+    status.textContent = a.thinking;
+    const ctl2 = new AbortController();
+    const kt = setTimeout(function () { ctl2.abort(); }, 180000);
+    fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: buildAskPrompt(q) }),
+      signal: ctl2.signal
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.answer) {
+        UI.askLog.push({ q: q, a: j.answer });
+        input.value = "";
+        status.hidden = true;
+        renderAskLog();
+      } else {
+        status.textContent = a.error;
+      }
+    }).catch(function () {
+      status.textContent = a.error;
+    }).finally(function () {
+      clearTimeout(kt);
+      UI._askBusy = false;
+      btn.disabled = false;
+    });
+  });
 }
 
 /* ---------- footer + toast ---------- */

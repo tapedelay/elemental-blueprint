@@ -276,6 +276,15 @@ Reference texts (for principle-mining while writing content):
 3. Keep `index.html` under roughly 150 KB. Commit at each phase boundary.
 4. When writing the 25 combo profiles and 5 pure-type Blueprints, write them all in one dedicated session so the voice stays consistent.
 
+## 11a. Local companion: Ask (added 2026-07-06, client direction)
+
+An "Ask" section at the end of the Blueprint lets the user ask Claude follow-up questions about their result, billed to their own Claude subscription rather than an API key.
+
+- `server.js` (zero dependencies, binds 127.0.0.1:8873 only) serves the static app and bridges `POST /api/ask` to the Claude Code CLI: it pipes the prompt to `claude -p --output-format text` via stdin and returns the text answer. 180 s timeout, 200 KB body/output caps. `GET /api/health` reports availability.
+- The client composes the full prompt from CONTENT: the app's voice rules (secular, no banned vocabulary, states are weather, under 180 words), a compact framework canon, the user's `scores` JSON, optional name, the last 3 exchanges, then the question. Q&A history is in-memory only, never persisted.
+- Graceful degradation: opened as `file://` or without the companion running, the section shows a one-line hint instead of the form. The app remains fully self-contained; the companion is optional.
+- Privacy disclosure amendment: the Ask intro states plainly that the question and scores go to Claude; everything else stays on-device. `launch.bat` now starts the companion in a Windows Terminal tab and opens the browser.
+
 ## 11. Open questions for the client
 
 1. Is "Elemental Blueprint" the final name, or working title?
