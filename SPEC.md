@@ -63,6 +63,8 @@ state       = overall >= 0.62 : Grounded
               otherwise       : Integrating
 ```
 
+**Co-primary amendment (2026-07-07, client direction).** When the top two elements are equal at display resolution (identical rounded percentages), no honest order exists between them: `argmax` would fall back to the canonical element list, which is arbitrary. The stored shape keeps `primary`/`secondary` in canonical order for compatibility, but a derived `coPrimary` flag (recomputed from `pct` on demand, so old saves and shared codes need no migration) drives presentation: both elements shown as primary in both colors, both archetype lines, both full blueprints, a shared "Both at N%" line, and a co-primary gloss instead of a single portrait. The matching engine goes symmetric on ties: the user side averages both orientations 50/50 instead of the 80/20 primary/secondary refinement, and a tied subject blends 50/50 instead of 70/30.
+
 ### Seed question bank v1 (10 items, keys inline)
 
 1. **A completely free Saturday appears, zero obligations. Your honest first move:**
@@ -296,6 +298,14 @@ A "Read anyone" section above Ask lets the user type any public figure. Claude (
 - The endpoint rejects any request carrying a foreign `Origin` header (403). Browsers attach `Origin` to all cross-site POSTs including preflight-free `text/plain` ones, so a hostile web page in another tab cannot silently spend the user's Claude quota; same-machine tooling without the header still works.
 - After a read, the Ask prompt gains the person + dyad JSON so follow-up questions can reference the pairing.
 - Fixtures: 2 hand-computed dyad cases + 1 parsePersona renormalization case run alongside the 4 scoring fixtures under `?debug=1` (7 total).
+
+## 11c. Direct entry, blueprint codes in, saved results (added 2026-07-07, client direction)
+
+Every feature is usable without taking the assessment, and no result is ever silently lost.
+
+- **Direct entry** (landing link): set the five weights by hand (any scale; read as proportions), name the result, and pick the state yourself, since state normally derives from answer valences that manual entry does not have. `manualScores` normalizes, types primary/secondary/co-primary with the same thresholds as the quiz, and uses a representative maturity midpoint for the chosen state band (Grounded .72, Integrating .52, Reactive .32).
+- **Code loading**: the existing shareable `EB1.` code can now be pasted on the landing screen. `decodeBlueprint` validates the whole shape (elements against the canonical list, state, maturity, pct ranges) before hydrating; malformed or tampered codes are rejected with a one-line error.
+- **Saved results** (`eb.profiles.v1`, capped at 12): before anything replaces the active result - a retake finishing, a direct entry, a code load, or loading another saved result - the current result is stashed automatically, deduplicated by its code. The landing screen lists saved results for one-tap reload; the Blueprint footer links back to it. Erase clears these too.
 
 ## 11. Open questions for the client
 

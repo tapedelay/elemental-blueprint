@@ -159,6 +159,9 @@ ol.practices li::before{content:"0" counter(pr);position:absolute;left:0;top:12p
 
 /* ask: local Claude companion */
 .askrow{display:flex;gap:10px;margin-top:14px}
+.drow{display:flex;align-items:center;gap:16px;margin-top:12px}
+.drow .lbl{width:72px;margin:0}
+.dnum{width:110px}
 .askin{flex:1;min-width:0;font:400 15px/1.4 var(--body);color:var(--ink);background:transparent;
   border:1px solid var(--ink-25);border-radius:0;padding:13px 14px;transition:border-color var(--fast)}
 .askin:focus{border-color:var(--ink)}
@@ -210,6 +213,25 @@ const CONTENT = {
     landingNote: "Three minutes · Nothing leaves this device",
     disclaimer: "A self-reflection tool. Not a psychological assessment, diagnosis, or advice.",
     privacyNote: "All data stays on this device."
+  },
+
+  landing: {
+    directLink: "Enter numbers directly",
+    codeLink: "Paste a blueprint code",
+    codeButton: "Load",
+    codeBad: "That code did not read. Check it and try again.",
+    savedLabel: "Saved results"
+  },
+
+  direct: {
+    label: "Direct entry",
+    title: "Set the weights by hand",
+    intro: "For a result you already know, or one you want to explore. The numbers are read as proportions, so any scale works. The questions normally measure state from how you answer; here you choose it yourself.",
+    nameLabel: "Name this result (optional)",
+    stateLabel: "Current state",
+    button: "Open the Blueprint",
+    invalid: "Give at least one element a weight above zero.",
+    back: "Back"
   },
 
   framing: {
@@ -265,6 +287,9 @@ const CONTENT = {
     label: "Your pattern",
     primaryLabel: "Primary",
     secondaryLabel: "Secondary",
+    coPrimaryLabel: "Co-primary",
+    coBothLabel: "Both at",
+    coPrimaryGloss: "Two patterns arrived at exactly equal strength. Neither one leads; you move between them depending on the room, the stakes, and the company. Both blueprints are fully yours.",
     button: "Open your Blueprint",
     chartAria: "A five-sided chart of your element percentages"
   },
@@ -283,10 +308,12 @@ const CONTENT = {
   footer: {
     retake: "Retake",
     copyCode: "Copy my code",
+    results: "Saved results",
     erase: "Erase my data",
     copied: "Code copied",
-    confirmRetake: "Retake the assessment? Your current result will be replaced when you finish.",
-    confirmErase: "Erase everything this app has stored on this device?"
+    stashToast: "Previous result kept in Saved results",
+    confirmRetake: "Retake the assessment? Your current result moves to Saved results when you finish.",
+    confirmErase: "Erase everything this app has stored on this device, including saved results?"
   },
 
   ask: {
@@ -701,6 +728,43 @@ function scoreAnswers(answers) {
   };
 }
 
+/* A tie is judged at display resolution: when the rounded percentages
+   are equal, any order between the top two would be an artifact of the
+   canonical element list, so both are presented as primary. Computed
+   from pct on demand rather than stored, so old saves and shared codes
+   pick it up with no migration. */
+function isCoPrimary(s) {
+  return !!(s && s.secondary && s.pct && s.pct[s.primary] === s.pct[s.secondary]);
+}
+
+/* Direct entry: build a scores object from hand-set weights. There is
+   no per-answer valence data, so maturity.overall is a representative
+   midpoint of the chosen state band and perElement stays empty. */
+function manualScores(weights, state) {
+  const w = {};
+  let total = 0;
+  ELS.forEach(function (e) {
+    w[e] = Math.max(0, Number(weights[e]) || 0);
+    total += w[e];
+  });
+  if (total <= 0) return null;
+  const pctF = {};
+  ELS.forEach(function (e) { pctF[e] = w[e] / total; });
+  const order = ELS.slice().sort(function (a, b) {
+    return pctF[b] - pctF[a] || ELS.indexOf(a) - ELS.indexOf(b);
+  });
+  const st = state === "grounded" || state === "reactive" ? state : "integrating";
+  const overallF = { grounded: 0.72, integrating: 0.52, reactive: 0.32 }[st];
+  return {
+    pct: roundPcts(pctF),
+    pctF: pctF,
+    primary: order[0],
+    secondary: pctF[order[1]] >= THRESH.secondary ? order[1] : null,
+    maturity: { overall: round2(overallF), overallF: overallF, perElement: {} },
+    state: st
+  };
+}
+
 /* The stored/shareable shape from SPEC section 5 (derived floats stripped). */
 function publicScores(s) {
   return {
@@ -716,6 +780,28 @@ function encodeBlueprint(s) {
   const json = JSON.stringify(publicScores(s));
   const b64 = btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return "EB1." + b64;
+}
+
+function decodeBlueprint(code) {
+  const m = /^EB1\.([A-Za-z0-9_-]+)$/.exec(String(code || "").trim());
+  if (!m) return null;
+  let j = null;
+  try { j = JSON.parse(atob(m[1].replace(/-/g, "+").replace(/_/g, "/"))); }
+  catch (e) { return null; }
+  if (!j || !j.pct || ELS.indexOf(j.primary) < 0) return null;
+  if (j.secondary != null && (ELS.indexOf(j.secondary) < 0 || j.secondary === j.primary)) return null;
+  if (!j.maturity || typeof j.maturity.overall !== "number") return null;
+  if (!{ grounded: 1, integrating: 1, reactive: 1 }[j.state]) return null;
+  /* every real producer emits all five keys summing to 100 via roundPcts */
+  let pctSum = 0;
+  const pctOk = ELS.every(function (e) {
+    const v = j.pct[e];
+    if (typeof v !== "number" || !isFinite(v) || v < 0 || v > 100) return false;
+    pctSum += v;
+    return true;
+  });
+  if (!pctOk || Math.round(pctSum) !== 100) return null;
+  return hydrateScores(j);
 }
 
 /* ---- Phase 2 seed: relations and dyad scoring (SPEC section 4) ----
@@ -746,11 +832,21 @@ function dyadScore(user, person) {
   const p2 = person.secondary || person.primary; /* doubles count as pure */
   const S = function (u, p) { return REL[relationOf(p, u)].stab; };
   const C = function (u, p) { return REL[relationOf(p, u)].chem; };
-  let stab = 0.7 * S(user.primary, p1) + 0.3 * S(user.primary, p2);
-  let chem = 0.7 * C(user.primary, p1) + 0.3 * C(user.primary, p2);
-  if (user.secondary) {
-    stab = 0.8 * stab + 0.2 * S(user.secondary, p1);
-    chem = 0.8 * chem + 0.2 * C(user.secondary, p1);
+  /* exact ties get symmetric weight instead of canonical-order bias */
+  const pw = isCoPrimary(person) ? 0.5 : 0.7;
+  const su = function (u) { return pw * S(u, p1) + (1 - pw) * S(u, p2); };
+  const cu = function (u) { return pw * C(u, p1) + (1 - pw) * C(u, p2); };
+  let stab, chem;
+  if (isCoPrimary(user)) {
+    stab = 0.5 * su(user.primary) + 0.5 * su(user.secondary);
+    chem = 0.5 * cu(user.primary) + 0.5 * cu(user.secondary);
+  } else {
+    stab = su(user.primary);
+    chem = cu(user.primary);
+    if (user.secondary) {
+      stab = 0.8 * stab + 0.2 * S(user.secondary, p1);
+      chem = 0.8 * chem + 0.2 * C(user.secondary, p1);
+    }
   }
   const W = { grounded: [0.75, 0.25], integrating: [0.55, 0.45], reactive: [0.30, 0.70] }[user.state] || [0.55, 0.45];
   const raw = Math.max(0, Math.min(100, W[0] * stab + W[1] * chem));
@@ -860,6 +956,17 @@ const DYAD_FIXTURES = [
     userAnswers: 0,
     person: { primary: "water", secondary: null },
     expect: { relation: "P_CONTROLS_U", score: 46, tier: "effortful" }
+  },
+  {
+    /* co-primary user: symmetric halves, no canonical-order bias.
+       su(fire)=85 (earth feeds fire's user), su(water)=30 (earth
+       controls water); stab=57.5, chem=(55+95)/2=75; grounded blend
+       .75*57.5+.25*75 = 61.875 -> 62 workable. */
+    name: "dyad: tied fire/water grounded user x pure earth person is symmetric",
+    user: { primary: "fire", secondary: "water", state: "grounded",
+            pct: { fire: 27, water: 27, wood: 23, earth: 16, metal: 7 } },
+    person: { primary: "earth", secondary: null },
+    expect: { relation: "U_GENERATES_P", score: 62, tier: "workable" }
   }
 ];
 
@@ -898,7 +1005,7 @@ function runFixtures() {
   });
 
   DYAD_FIXTURES.forEach(function (f) {
-    const u = scoreAnswers(FIXTURES[f.userAnswers].answers);
+    const u = f.user || scoreAnswers(FIXTURES[f.userAnswers].answers);
     const d = dyadScore(u, f.person);
     const ok = d.relation === f.expect.relation && d.score === f.expect.score && d.tier === f.expect.tier;
     console.assert(ok, "DYAD FAIL: " + f.name, { expected: f.expect, got: d });
@@ -914,7 +1021,31 @@ function runFixtures() {
   console.log((ppOk ? "PASS" : "FAIL") + " :: parsePersona renormalizes a 90-sum pct and retypes from numbers");
   if (ppOk) pass++;
 
-  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 1;
+  const man = manualScores({ fire: 27, water: 27, wood: 23, earth: 16, metal: 7 }, "grounded");
+  const manOk = !!man && man.primary === "fire" && man.secondary === "water" &&
+    isCoPrimary(man) && man.pct.fire === 27 && man.state === "grounded" &&
+    ELS.reduce(function (t, e) { return t + man.pct[e]; }, 0) === 100;
+  console.assert(manOk, "MANUAL FAIL: manualScores tie", man);
+  console.log((manOk ? "PASS" : "FAIL") + " :: manualScores normalizes weights and flags the co-primary tie");
+  if (manOk) pass++;
+
+  const rtSrc = scoreAnswers(FIXTURES[3].answers);
+  const rt = decodeBlueprint(encodeBlueprint(rtSrc));
+  const forge = function (patch) {
+    const j = Object.assign(JSON.parse(JSON.stringify(publicScores(rtSrc))), patch);
+    return "EB1." + btoa(JSON.stringify(j)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  };
+  const rtOk = !!rt && rt.primary === rtSrc.primary && rt.secondary === rtSrc.secondary &&
+    rt.state === rtSrc.state && rt.pct.water === rtSrc.pct.water &&
+    decodeBlueprint("EB1.!!!") === null && decodeBlueprint("junk") === null &&
+    decodeBlueprint(forge({ secondary: rtSrc.primary })) === null &&
+    decodeBlueprint(forge({ pct: { wood: 100, fire: 100, earth: 100, metal: 100, water: 100 } })) === null &&
+    decodeBlueprint(forge({ pct: { fire: 80 } })) === null;
+  console.assert(rtOk, "DECODE FAIL: blueprint code roundtrip", rt);
+  console.log((rtOk ? "PASS" : "FAIL") + " :: blueprint code roundtrips and rejects malformed codes");
+  if (rtOk) pass++;
+
+  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 3;
   console.log(pass + "/" + totalFix + " fixtures passed");
   console.groupEnd();
   return pass === totalFix;
@@ -974,7 +1105,60 @@ function loadAll() {
 }
 function eraseAll() {
   try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+  try { localStorage.removeItem(PROFILES_KEY); } catch (e) { /* ignore */ }
   memStore = null;
+  memProfiles = null;
+}
+
+/* ---------- saved results: nothing is ever silently lost ---------- */
+const PROFILES_KEY = "eb.profiles.v1";
+let memProfiles = null; /* same session-survival fallback as memStore */
+function loadProfiles() {
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if (raw) {
+      const a = JSON.parse(raw);
+      /* hand-edited or partial entries must never break the landing */
+      if (Array.isArray(a)) {
+        return a.filter(function (p) {
+          return p && p.scores && ELS.indexOf(p.scores.primary) >= 0 &&
+            (p.scores.secondary == null || ELS.indexOf(p.scores.secondary) >= 0);
+        });
+      }
+    }
+  } catch (e) { /* fall through */ }
+  return memProfiles || [];
+}
+function saveProfiles(list) {
+  const trimmed = list.slice(-12);
+  try { localStorage.setItem(PROFILES_KEY, JSON.stringify(trimmed)); }
+  catch (e) { memProfiles = trimmed; }
+}
+/* Keep the active result before anything replaces it. Deduped by code,
+   so re-loading or re-entering the same result never piles up copies. */
+function stashCurrent() {
+  if (!UI.scores) return false;
+  const code = encodeBlueprint(UI.scores);
+  const list = loadProfiles();
+  if (list.some(function (p) { return p.code === code; })) return false;
+  list.push({
+    name: UI.profile.name || "",
+    code: code,
+    scores: publicScores(UI.scores),
+    savedAt: new Date().toISOString().slice(0, 10)
+  });
+  saveProfiles(list);
+  return true;
+}
+/* Make a scores object the active result (direct entry, code, profile). */
+function adoptScores(scores, name) {
+  const kept = stashCurrent();
+  UI.scores = scores;
+  if (typeof name === "string") UI.profile.name = name; /* "" clears it */
+  UI._persona = null; /* any dyad belonged to the previous result */
+  saveAll();
+  go("blueprint");
+  if (kept) toast(CONTENT.footer.stashToast);
 }
 
 function answerArray() {
@@ -1123,7 +1307,8 @@ function render() {
   window.scrollTo(0, 0);
   const fn = {
     landing: renderLanding, framing: renderFraming, about: renderAbout,
-    quiz: renderQuiz, reveal: renderReveal, blueprint: renderBlueprint
+    quiz: renderQuiz, reveal: renderReveal, blueprint: renderBlueprint,
+    direct: renderDirect
   }[UI.screen];
   fn();
   renderFooter();
@@ -1132,15 +1317,104 @@ function render() {
 }
 
 function renderLanding() {
+  const L = CONTENT.landing;
+  const profs = loadProfiles();
+  const savedList = profs.length
+    ? '<div style="margin-top:34px"><p class="lbl">' + L.savedLabel + "</p>" +
+      '<div class="footrow" style="justify-content:center;margin-top:12px">' +
+      profs.slice().reverse().map(function (p, i) {
+        const s = p.scores;
+        const desc = CONTENT.elements[s.primary].name +
+          (s.secondary ? " + " + CONTENT.elements[s.secondary].name : "");
+        return '<button class="linkbtn" data-prof="' + (profs.length - 1 - i) + '">' +
+          (p.name ? esc(p.name) + " · " : "") + desc + " · " + esc(p.savedAt) + "</button>";
+      }).join("") + "</div></div>"
+    : "";
   $("#app").innerHTML =
     '<div class="screen center" style="padding-top:9vh">' +
       '<div style="margin-bottom:26px">' + pentagonSVG(null, { size: 120, aria: "The five-element pentagon" }) + "</div>" +
       '<h1 class="display">' + CONTENT.meta.app + "</h1>" +
       '<p class="lede" style="margin:16px auto 34px;max-width:34ch">' + CONTENT.meta.tagline + "</p>" +
       '<button class="btn" id="begin">Begin</button>' +
+      '<div class="footrow" style="justify-content:center;margin-top:24px">' +
+        '<button class="linkbtn" id="godirect">' + L.directLink + "</button>" +
+        '<button class="linkbtn" id="codetoggle">' + L.codeLink + "</button>" +
+      "</div>" +
+      '<form id="coderow" hidden style="margin-top:6px;max-width:420px;margin-left:auto;margin-right:auto">' +
+        '<div class="askrow">' +
+          '<input class="askin" id="codein" autocomplete="off" spellcheck="false" placeholder="EB1...">' +
+          '<button class="btn sm" id="codego" type="submit">' + L.codeButton + "</button>" +
+        "</div>" +
+        '<p class="micro" id="codebad" hidden style="margin-top:8px">' + L.codeBad + "</p>" +
+      "</form>" +
+      savedList +
       '<p class="micro" style="margin-top:26px">' + CONTENT.meta.landingNote + "</p>" +
     "</div>";
   $("#begin").addEventListener("click", function () { go("framing"); });
+  $("#godirect").addEventListener("click", function () { go("direct"); });
+  $("#codetoggle").addEventListener("click", function () {
+    const row = $("#coderow");
+    row.hidden = !row.hidden;
+    if (!row.hidden) $("#codein").focus();
+  });
+  $("#coderow").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    const s = decodeBlueprint($("#codein").value);
+    if (!s) { $("#codebad").hidden = false; return; }
+    adoptScores(s, "");
+  });
+  document.querySelectorAll("[data-prof]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const p = loadProfiles()[Number(btn.dataset.prof)];
+      if (!p) return;
+      try { adoptScores(hydrateScores(p.scores), p.name || ""); }
+      catch (e) { /* corrupt entry; leave the landing as is */ }
+    });
+  });
+}
+
+function renderDirect() {
+  const D = CONTENT.direct;
+  $("#app").innerHTML =
+    '<div class="screen" style="padding-top:5vh">' +
+      '<p class="lbl">' + D.label + "</p>" +
+      '<h2 class="display" style="margin:10px 0 8px">' + D.title + "</h2>" +
+      '<p style="color:var(--ink-70)">' + D.intro + "</p>" +
+      '<div class="field"><label class="lbl" for="dnm" style="display:block;margin-bottom:10px">' + D.nameLabel + "</label>" +
+        '<input class="name" id="dnm" maxlength="24" autocomplete="off" value="' + esc(UI.profile.name) + '"></div>' +
+      '<div class="field">' + ELS.map(function (e) {
+        return '<div class="drow"><label class="lbl" for="d-' + e + '" style="color:var(--' + e + '-t)">' +
+          CONTENT.elements[e].name + "</label>" +
+          '<input class="name dnum" id="d-' + e + '" type="number" min="0" max="100" step="1" inputmode="numeric" value="0"></div>';
+      }).join("") + "</div>" +
+      '<div class="field"><p class="lbl">' + D.stateLabel + '</p><div class="chips" id="dstate">' +
+        ["grounded", "integrating", "reactive"].map(function (st) {
+          return '<button type="button" class="chip" data-value="' + st + '" aria-pressed="' + (st === "integrating") + '">' +
+            CONTENT.states[st].name + "</button>";
+        }).join("") + "</div></div>" +
+      '<p class="micro" id="dbad" hidden>' + D.invalid + "</p>" +
+      '<div class="footrow" style="margin-top:26px;align-items:center">' +
+        '<button class="btn" id="dgo">' + D.button + "</button>" +
+        '<button class="linkbtn" id="dback">' + D.back + "</button>" +
+      "</div>" +
+    "</div>";
+  let state = "integrating";
+  document.querySelectorAll("#dstate .chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      state = c.dataset.value;
+      document.querySelectorAll("#dstate .chip").forEach(function (x) {
+        x.setAttribute("aria-pressed", String(x === c));
+      });
+    });
+  });
+  $("#dback").addEventListener("click", function () { go("landing"); });
+  $("#dgo").addEventListener("click", function () {
+    const weights = {};
+    ELS.forEach(function (e) { weights[e] = $("#d-" + e).value; });
+    const s = manualScores(weights, state);
+    if (!s) { $("#dbad").hidden = false; return; }
+    adoptScores(s, $("#dnm").value.trim());
+  });
 }
 
 function renderFraming() {
@@ -1157,6 +1431,9 @@ function renderFraming() {
 }
 
 function renderAbout() {
+  /* The name field below live-binds into UI.profile.name; stash the
+     outgoing result first so a rename cannot relabel it. */
+  if (stashCurrent()) toast(CONTENT.footer.stashToast);
   const a = CONTENT.about;
   function chipRow(items, key) {
     return '<div class="chips" data-key="' + key + '">' + items.map(function (it) {
@@ -1287,10 +1564,12 @@ function renderQuiz() {
 }
 
 function finishQuiz() {
+  const kept = stashCurrent(); /* a retake never destroys the old result */
   UI.scores = scoreAnswers(answerArray());
   UI._persona = null; /* dyad was computed against the previous scores */
   saveAll();
   go("reveal");
+  if (kept) toast(CONTENT.footer.stashToast);
 }
 
 function renderReveal() {
@@ -1298,24 +1577,36 @@ function renderReveal() {
   const el = CONTENT.elements[s.primary];
   const st = CONTENT.states[s.state];
   const name = UI.profile.name;
-  const secondaryLine = s.secondary
+  const co = isCoPrimary(s);
+  const r = CONTENT.reveal;
+  const nameHTML = co ? coNameHTML(s) : '<span style="color:var(--' + s.primary + '-t)">' + el.name + "</span>";
+  const archetypeLines = co
+    ? '<p class="mono fin" style="--d:2.65s;font-size:13px;letter-spacing:.08em;color:var(--ink-70)">' +
+        el.name + ": " + el.archetype + "</p>" +
+      '<p class="mono fin" style="--d:2.65s;font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:4px">' +
+        CONTENT.elements[s.secondary].name + ": " + CONTENT.elements[s.secondary].archetype + "</p>"
+    : '<p class="mono fin" style="--d:2.65s;font-size:13px;letter-spacing:.08em;color:var(--ink-70)">' + el.archetype + "</p>";
+  const secondaryLine = co
     ? '<p class="mono fin" style="--d:2.75s;font-size:13px;color:var(--ink-70);margin-top:10px">' +
-      CONTENT.reveal.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
+      r.coBothLabel + " " + s.pct[s.primary] + "%</p>"
+    : s.secondary
+    ? '<p class="mono fin" style="--d:2.75s;font-size:13px;color:var(--ink-70);margin-top:10px">' +
+      r.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
     : "";
 
   $("#app").innerHTML =
     '<div class="screen center" style="padding-top:2vh">' +
-      '<p class="lbl" style="margin-bottom:18px">' + CONTENT.reveal.label + "</p>" +
+      '<p class="lbl" style="margin-bottom:18px">' + r.label + "</p>" +
       pentagonSVG(s, { animate: true }) +
       '<div style="margin-top:26px">' +
-        '<p class="lbl fin" style="--d:2.4s">' + CONTENT.reveal.primaryLabel + "</p>" +
-        '<h2 class="display revealname fin" style="--d:2.5s;color:var(--' + s.primary + '-t)">' + el.name + "</h2>" +
-        '<p class="mono fin" style="--d:2.65s;font-size:13px;letter-spacing:.08em;color:var(--ink-70)">' + el.archetype + "</p>" +
+        '<p class="lbl fin" style="--d:2.4s">' + (co ? r.coPrimaryLabel : r.primaryLabel) + "</p>" +
+        '<h2 class="display revealname fin" style="--d:2.5s">' + nameHTML + "</h2>" +
+        archetypeLines +
         secondaryLine +
         '<div class="fin" style="--d:3s;margin-top:24px"><span class="statechip">' + st.name + "</span>" +
           '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p></div>" +
-        '<p class="portrait fin" style="--d:3.4s">' + (name ? esc(name) + ". " : "") + el.portrait + "</p>" +
-        '<div class="fin" style="--d:3.8s;margin-top:8px"><button class="btn" id="open">' + CONTENT.reveal.button + "</button></div>" +
+        '<p class="portrait fin" style="--d:3.4s">' + (name ? esc(name) + ". " : "") + (co ? r.coPrimaryGloss : el.portrait) + "</p>" +
+        '<div class="fin" style="--d:3.8s;margin-top:8px"><button class="btn" id="open">' + r.button + "</button></div>" +
       "</div>" +
     "</div>";
 
@@ -1343,48 +1634,83 @@ function renderReveal() {
   $("#open").addEventListener("click", function () { go("blueprint"); });
 }
 
+/* The two-color headline for an exact tie; used on reveal + blueprint. */
+function coNameHTML(s) {
+  return '<span style="color:var(--' + s.primary + '-t)">' + CONTENT.elements[s.primary].name + "</span>" +
+    '<span style="color:var(--ink-55)"> + </span>' +
+    '<span style="color:var(--' + s.secondary + '-t)">' + CONTENT.elements[s.secondary].name + "</span>";
+}
+
+/* One element's full blueprint body: portrait through practices.
+   Rules are colored by the element so a co-primary page reads as two
+   clearly separate patterns. */
+function elementBodyHTML(e) {
+  const el = CONTENT.elements[e];
+  const b = CONTENT.blueprint;
+  const barColor = "var(--" + e + ")";
+  function section(label, inner) {
+    return '<div class="section"><p class="lbl">' + label + "</p>" +
+      '<div class="rule" style="background:' + barColor + '"></div>' + inner + "</div>";
+  }
+  return '<p class="portrait">' + el.portrait + "</p>" +
+    section(b.driveLabel, '<p style="font-size:16px;line-height:1.7">' + el.drive + "</p>") +
+    section(b.giftsLabel, '<ul class="plain">' + el.gifts.map(function (g) { return "<li>" + g + "</li>"; }).join("") + "</ul>") +
+    section(b.registersLabel,
+      '<div class="cols">' +
+        '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.matureLabel + '</p><ul class="plain">' +
+          el.mature.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
+        '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.shadowLabel + '</p><ul class="plain">' +
+          el.shadow.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
+      "</div>") +
+    section(b.stressLabel,
+      '<p class="stressname">' + el.stress.name + "</p>" +
+      '<p style="font-size:15.5px;line-height:1.7;color:var(--ink-70)">' + el.stress.body + "</p>") +
+    section(b.practicesLabel,
+      '<ol class="practices">' + el.practices.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>");
+}
+
 function renderBlueprint() {
   const s = UI.scores;
   const el = CONTENT.elements[s.primary];
   const st = CONTENT.states[s.state];
   const b = CONTENT.blueprint;
-  const barColor = "var(--" + s.primary + ")";
+  const r = CONTENT.reveal;
+  const co = isCoPrimary(s);
 
-  function section(label, inner) {
-    return '<div class="section"><p class="lbl">' + label + "</p>" +
-      '<div class="rule" style="background:' + barColor + '"></div>' + inner + "</div>";
-  }
-  const secondaryLine = s.secondary
+  const nameHTML = co ? coNameHTML(s) : '<span style="color:var(--' + s.primary + '-t)">' + el.name + "</span>";
+  const archetypeLines = co
+    ? '<p class="mono" style="font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:6px">' +
+        el.name + ": " + el.archetype + "</p>" +
+      '<p class="mono" style="font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:4px">' +
+        CONTENT.elements[s.secondary].name + ": " + CONTENT.elements[s.secondary].archetype + "</p>"
+    : '<p class="mono" style="font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:6px">' + el.archetype + "</p>";
+  const secondaryLine = co
     ? '<p class="mono" style="font-size:13px;color:var(--ink-70);margin-top:8px">' +
-      CONTENT.reveal.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
+      r.coPrimaryLabel + " · " + r.coBothLabel.toLowerCase() + " " + s.pct[s.primary] + "%</p>"
+    : s.secondary
+    ? '<p class="mono" style="font-size:13px;color:var(--ink-70);margin-top:8px">' +
+      r.secondaryLabel + ": " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%</p>"
     : "";
+  const body = co
+    ? '<p class="portrait">' + r.coPrimaryGloss + "</p>" +
+      [s.primary, s.secondary].map(function (e) {
+        return '<h3 class="display" style="font-size:20px;letter-spacing:.14em;color:var(--' + e + '-t);margin-top:48px;text-align:center">' +
+          CONTENT.elements[e].name.toUpperCase() + "</h3>" + elementBodyHTML(e);
+      }).join("")
+    : elementBodyHTML(s.primary);
 
   $("#app").innerHTML =
     '<div class="screen">' +
       '<div class="bphead" style="padding-top:2vh">' +
         '<p class="lbl">' + b.label + (UI.profile.name ? " · " + esc(UI.profile.name) : "") + "</p>" +
         '<div style="margin:20px 0 6px">' + pentagonSVG(s, { size: 250 }) + "</div>" +
-        '<h2 class="display bpname" style="color:var(--' + s.primary + '-t)">' + el.name + "</h2>" +
-        '<p class="mono" style="font-size:13px;letter-spacing:.08em;color:var(--ink-70);margin-top:6px">' + el.archetype + "</p>" +
+        '<h2 class="display bpname">' + nameHTML + "</h2>" +
+        archetypeLines +
         secondaryLine +
         '<div style="margin-top:18px"><span class="statechip">' + st.name + "</span></div>" +
         '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p>" +
       "</div>" +
-      '<p class="portrait">' + el.portrait + "</p>" +
-      section(b.driveLabel, '<p style="font-size:16px;line-height:1.7">' + el.drive + "</p>") +
-      section(b.giftsLabel, '<ul class="plain">' + el.gifts.map(function (g) { return "<li>" + g + "</li>"; }).join("") + "</ul>") +
-      section(b.registersLabel,
-        '<div class="cols">' +
-          '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.matureLabel + '</p><ul class="plain">' +
-            el.mature.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
-          '<div class="card"><p class="lbl" style="margin-bottom:10px">' + b.shadowLabel + '</p><ul class="plain">' +
-            el.shadow.map(function (m) { return "<li>" + m + "</li>"; }).join("") + "</ul></div>" +
-        "</div>") +
-      section(b.stressLabel,
-        '<p class="stressname">' + el.stress.name + "</p>" +
-        '<p style="font-size:15.5px;line-height:1.7;color:var(--ink-70)">' + el.stress.body + "</p>") +
-      section(b.practicesLabel,
-        '<ol class="practices">' + el.practices.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>") +
+      body +
       personaSectionHTML() +
       askSectionHTML() +
     "</div>";
@@ -1418,6 +1744,7 @@ function buildAskPrompt(question) {
   return CONTENT.ask.rules +
     "\n\nTHE FRAMEWORK\n" + canon +
     "\n\nTHE USER'S RESULT (JSON)\n" + JSON.stringify(publicScores(UI.scores)) +
+    (isCoPrimary(UI.scores) ? "\nThe user's top two elements are exactly tied: treat them as co-primary, neither leading." : "") +
     (UI.profile.name ? "\nThe user goes by " + UI.profile.name + "." : "") +
     (UI._persona ? "\n\nA PUBLIC FIGURE JUST READ (public persona) AND THE COMPUTED PAIRING\n" +
       JSON.stringify({
@@ -1547,8 +1874,11 @@ function renderPersona() {
       '<div style="margin:14px 0 4px;text-align:center">' +
         pentagonSVG(r.scores, { size: 230, aria: r.name + " element chart" }) + "</div>" +
       '<p class="mono" style="font-size:13px;color:var(--ink-70);text-align:center">' +
-        CONTENT.elements[r.scores.primary].name + " " + r.scores.pct[r.scores.primary] + "%" +
-        (sec ? " · " + CONTENT.elements[sec].name + " " + r.scores.pct[sec] + "%" : "") + "</p>" +
+        (isCoPrimary(r.scores)
+          ? CONTENT.elements[r.scores.primary].name + " + " + CONTENT.elements[sec].name +
+            " " + r.scores.pct[r.scores.primary] + "% · " + CONTENT.reveal.coPrimaryLabel
+          : CONTENT.elements[r.scores.primary].name + " " + r.scores.pct[r.scores.primary] + "%" +
+            (sec ? " · " + CONTENT.elements[sec].name + " " + r.scores.pct[sec] + "%" : "")) + "</p>" +
       '<ul class="plain" style="margin-top:12px">' +
         r.evidence.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
       (r.caveat ? '<p class="micro" style="margin-top:10px">' + esc(r.caveat) + "</p>" : "") +
@@ -1619,6 +1949,7 @@ function renderFooter() {
       ? '<div class="footrow">' +
           '<button class="linkbtn" id="f-retake">' + f.retake + "</button>" +
           '<button class="linkbtn" id="f-copy">' + f.copyCode + "</button>" +
+          '<button class="linkbtn" id="f-results">' + f.results + "</button>" +
           '<button class="linkbtn" id="f-erase">' + f.erase + "</button>" +
         "</div>"
       : "") +
@@ -1630,6 +1961,7 @@ function renderFooter() {
       UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0;
       go("quiz");
     });
+    $("#f-results").addEventListener("click", function () { go("landing"); });
     $("#f-copy").addEventListener("click", function () {
       const code = encodeBlueprint(UI.scores);
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1658,7 +1990,8 @@ function toast(msg) {
   const params = new URLSearchParams(window.location.search);
   if (params.has("debug")) {
     runFixtures();
-    window.EB = { scoreAnswers: scoreAnswers, encodeBlueprint: encodeBlueprint, FIXTURES: FIXTURES, CONTENT: CONTENT };
+    window.EB = { scoreAnswers: scoreAnswers, encodeBlueprint: encodeBlueprint, decodeBlueprint: decodeBlueprint,
+      manualScores: manualScores, isCoPrimary: isCoPrimary, FIXTURES: FIXTURES, CONTENT: CONTENT };
   }
   const saved = loadAll();
   if (saved && saved.meta && saved.meta.version === 1 && saved.scores && saved.scores.primary &&
