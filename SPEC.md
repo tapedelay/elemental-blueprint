@@ -285,6 +285,18 @@ An "Ask" section at the end of the Blueprint lets the user ask Claude follow-up 
 - Graceful degradation: opened as `file://` or without the companion running, the section shows a one-line hint instead of the form. The app remains fully self-contained; the companion is optional.
 - Privacy disclosure amendment: the Ask intro states plainly that the question and scores go to Claude; everything else stays on-device. `launch.bat` now starts the companion in a Windows Terminal tab and opens the browser.
 
+## 11b. Read anyone: persona reads + pairing (added 2026-07-07, client direction)
+
+A "Read anyone" section above Ask lets the user type any public figure. Claude (via the companion, with web search) maps the figure's public persona to the five elements; the local engine then scores the pairing with the user deterministically.
+
+- Claude's role is narrow: return strict JSON only: `{name, knownFor, pct, primary, secondary, evidence[], caveat}` or `{"error":"unknown"}`. The prompt (in CONTENT, `persona.rules`) carries the mapping guide, the banned vocabulary, and hard rules: public persona only, documented material only, no private-life speculation, no diagnosis.
+- The client hardens whatever comes back: `parsePersona` extracts the first JSON object, clamps and renormalizes `pct` to sum 100, and recomputes `primary`/`secondary` from the numbers (never trusts the model's labels). Length caps on every string. A malformed reply degrades to the error line, never a broken screen.
+- Pairing math is all local (`GEN`/`KE`/`REL`, `relationOf`, `dyadScore`): base relation scores per SPEC section 4, 70/30 primary/secondary blend on the subject, 80/20 user-secondary refinement, and stability/chemistry weights chosen by the USER's state only (grounded .75/.25, integrating .55/.45, reactive .30/.70). The subject's maturity is never assessed: their public persona cannot ethically be graded, so the engine only positions elements. Tiers from the unrounded blend: 85 cobuilder / 70 growth / 55 workable / 40 effortful / else volatile. Trap badge = subject-controls-user while user is reactive.
+- `POST /api/ask` accepts an optional `search: true`, which appends `--allowedTools WebSearch` to the CLI call. Only that one tool is ever granted.
+- The endpoint rejects any request carrying a foreign `Origin` header (403). Browsers attach `Origin` to all cross-site POSTs including preflight-free `text/plain` ones, so a hostile web page in another tab cannot silently spend the user's Claude quota; same-machine tooling without the header still works.
+- After a read, the Ask prompt gains the person + dyad JSON so follow-up questions can reference the pairing.
+- Fixtures: 2 hand-computed dyad cases + 1 parsePersona renormalization case run alongside the 4 scoring fixtures under `?debug=1` (7 total).
+
 ## 11. Open questions for the client
 
 1. Is "Elemental Blueprint" the final name, or working title?

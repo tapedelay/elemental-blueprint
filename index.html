@@ -167,6 +167,10 @@ ol.practices li::before{content:"0" counter(pr);position:absolute;left:0;top:12p
 .aska{border-left:2px solid var(--ink-25);padding:2px 0 2px 14px;font-size:15.5px;line-height:1.7}
 .aska p{margin-bottom:10px}
 .aska p:last-child{margin-bottom:0}
+.pcard{border:1px solid var(--ink-25);padding:18px;margin-top:16px}
+.dyadnums{display:flex;gap:26px;flex-wrap:wrap;margin:14px 0 16px}
+.dn .micro{display:block;margin-bottom:4px}
+.dn b{font:700 26px/1.1 var(--mono);color:var(--ink)}
 
 /* footer */
 footer#foot{border-top:1px solid var(--ink-12)}
@@ -294,6 +298,39 @@ const CONTENT = {
     offline: "Asking needs the local companion. Start the app with launch.bat (it runs server.js), then this section wakes up.",
     error: "No answer came back. Check that Claude Code is installed and signed in, then try again.",
     rules: "You are the in-app voice of Elemental Blueprint, a secular self-reflection tool that treats the Five Elements (Wood, Fire, Earth, Metal, Water) strictly as a behavioral pattern language: drives, stress responses, repair. Hard rules: no astrology or destiny language, no chakra talk, no medical or diagnostic claims, never pathologize; maturity states (Grounded, Integrating, Reactive) are weather, not identity. Voice: warm, plain, precise, concrete; no emoji; no em dashes. Answer in under 180 words unless asked for more."
+  },
+
+  persona: {
+    label: "Read anyone",
+    intro: "Type a public figure. Claude maps their public persona to the five elements from documented material, then the engine scores the pairing with you. Persona only; the private person is not on file.",
+    placeholder: "A public figure, e.g. David Lynch",
+    button: "Read",
+    thinking: "Reading public material...",
+    unknown: "Claude does not know that name well enough to read it honestly. Try someone more public.",
+    error: "The reading failed to come back. Try again.",
+    youX: "You x ",
+    stability: "Stability",
+    chemistry: "Chemistry",
+    blend: "Blend",
+    trapBadge: "High chemistry, high volatility",
+    footer: "A reading of the public persona, from public material; not the private person, and not a verdict on anyone.",
+    rules: 'You are the analyst inside Elemental Blueprint, a secular self-reflection tool that treats the Five Elements strictly as a behavioral pattern language. Task: read the PUBLIC PERSONA of the named person from publicly documented material: interviews, biographies, documented work habits, public conduct over time. If web search is available, use it to confirm or update; otherwise rely on well-established public knowledge. Mapping guide: Wood = drive, expansion, execution, fight response. Fire = expression, connection, charisma, scatter. Earth = nurture, steadiness, community, over-involvement. Metal = structure, standards, precision, withdrawal into correctness. Water = depth, introspection, meaning, disappearance inward. Hard rules: secular behavioral language only; no astrology or destiny words; no medical or diagnostic claims; no speculation about private life; describe patterns, never verdicts; plain punctuation only, never em dashes. Output ONLY a JSON object, no markdown fences, no commentary: {"name":"canonical name","knownFor":"one short line","pct":{"wood":0,"fire":0,"earth":0,"metal":0,"water":0} as integers summing to 100,"primary":"the largest element","secondary":"second largest if at least 18, else null","evidence":[3 to 5 short strings, each tying one element weight to specific documented public behavior],"caveat":"one honest line about the limits of this reading"}. If the person is not publicly known enough to read honestly, return {"error":"unknown"}.'
+  },
+
+  relations: {
+    P_GENERATES_U: "They feed you; nourishment without effort.",
+    U_GENERATES_P: "You feed them; purpose, with a depletion risk.",
+    SAME: "Deep resonance; doubled blind spots.",
+    U_CONTROLS_P: "You shape them; generous pruning or quiet stifling.",
+    P_CONTROLS_U: "They shape you; magnetic friction, the classic trap."
+  },
+
+  tiers: {
+    cobuilder: "Co-Builder",
+    growth: "Growth Match",
+    workable: "Workable with Awareness",
+    effortful: "Effortful",
+    volatile: "Volatile"
   },
 
   states: {
@@ -681,6 +718,97 @@ function encodeBlueprint(s) {
   return "EB1." + b64;
 }
 
+/* ---- Phase 2 seed: relations and dyad scoring (SPEC section 4) ----
+   Base relation table + state blend only; the age and polarity
+   modifiers apply to the ranked 25-combo matching, not to a
+   specific-person read. The subject's maturity state is never
+   assessed: the blend uses the user's own state. */
+const GEN = { wood: "fire", fire: "earth", earth: "metal", metal: "water", water: "wood" };
+const KE  = { wood: "earth", earth: "water", water: "fire", fire: "metal", metal: "wood" };
+const REL = {
+  P_GENERATES_U: { stab: 95, chem: 60 },
+  U_GENERATES_P: { stab: 85, chem: 55 },
+  SAME:          { stab: 70, chem: 50 },
+  U_CONTROLS_P:  { stab: 45, chem: 80 },
+  P_CONTROLS_U:  { stab: 30, chem: 95 }
+};
+
+function relationOf(p, u) {
+  if (p === u) return "SAME";
+  if (GEN[p] === u) return "P_GENERATES_U";
+  if (GEN[u] === p) return "U_GENERATES_P";
+  if (KE[p] === u) return "P_CONTROLS_U";
+  return "U_CONTROLS_P";
+}
+
+function dyadScore(user, person) {
+  const p1 = person.primary;
+  const p2 = person.secondary || person.primary; /* doubles count as pure */
+  const S = function (u, p) { return REL[relationOf(p, u)].stab; };
+  const C = function (u, p) { return REL[relationOf(p, u)].chem; };
+  let stab = 0.7 * S(user.primary, p1) + 0.3 * S(user.primary, p2);
+  let chem = 0.7 * C(user.primary, p1) + 0.3 * C(user.primary, p2);
+  if (user.secondary) {
+    stab = 0.8 * stab + 0.2 * S(user.secondary, p1);
+    chem = 0.8 * chem + 0.2 * C(user.secondary, p1);
+  }
+  const W = { grounded: [0.75, 0.25], integrating: [0.55, 0.45], reactive: [0.30, 0.70] }[user.state] || [0.55, 0.45];
+  const raw = Math.max(0, Math.min(100, W[0] * stab + W[1] * chem));
+  const relation = relationOf(p1, user.primary);
+  return {
+    relation: relation,
+    stab: Math.round(stab),
+    chem: Math.round(chem),
+    score: Math.round(raw),
+    tier: raw >= 85 ? "cobuilder" : raw >= 70 ? "growth" : raw >= 55 ? "workable" : raw >= 40 ? "effortful" : "volatile",
+    trap: relation === "P_CONTROLS_U" && user.state === "reactive"
+  };
+}
+
+/* Parse a persona reading returned by the companion: tolerate prose
+   around the JSON, renormalize pct to 100, and always retype
+   primary/secondary from the numbers rather than trusting labels. */
+/* Model text passes through here before display: the copy rules ban
+   em dashes, and hard truncation can leave dangling punctuation. */
+function cleanStr(x, max) {
+  return String(x).replace(/\s*[–—]\s*/g, "; ").slice(0, max)
+    .replace(/[\s;,:]+$/, "");
+}
+
+function parsePersona(text) {
+  const s = String(text).indexOf("{"), e = String(text).lastIndexOf("}");
+  if (s < 0 || e <= s) return null;
+  let j = null;
+  try { j = JSON.parse(String(text).slice(s, e + 1)); } catch (err) { return null; }
+  if (j && j.error) return { error: String(j.error) };
+  if (!j || !j.pct) return null;
+  const pf = {};
+  let sum = 0;
+  ELS.forEach(function (el) {
+    const v = Math.max(0, Number(j.pct[el]) || 0);
+    pf[el] = v;
+    sum += v;
+  });
+  if (sum <= 0) return null;
+  const pctF = {};
+  ELS.forEach(function (el) { pctF[el] = pf[el] / sum; });
+  const order = ELS.slice().sort(function (a, b) {
+    return pctF[b] - pctF[a] || ELS.indexOf(a) - ELS.indexOf(b);
+  });
+  return {
+    name: cleanStr(j.name || "", 60),
+    knownFor: cleanStr(j.knownFor || "", 160),
+    evidence: (Array.isArray(j.evidence) ? j.evidence : []).slice(0, 5).map(function (x) { return cleanStr(x, 220); }),
+    caveat: cleanStr(j.caveat || "", 200),
+    scores: {
+      pct: roundPcts(pctF),
+      pctF: pctF,
+      primary: order[0],
+      secondary: pctF[order[1]] >= THRESH.secondary ? order[1] : null
+    }
+  };
+}
+
 /* ================================================================
    FIXTURES · ?debug=1 runs these and asserts to the console.
    Expected values are hand-computed from the bank keys above.
@@ -718,6 +846,23 @@ const FIXTURES = [
   }
 ];
 
+/* Dyad fixtures: user answers come from FIXTURES by index; expected
+   values hand-computed from the SPEC section 4 table and blends. */
+const DYAD_FIXTURES = [
+  {
+    name: "dyad: wood/water integrating x fire+earth person",
+    userAnswers: 1,
+    person: { primary: "fire", secondary: "earth" },
+    expect: { relation: "U_GENERATES_P", score: 67, tier: "workable" }
+  },
+  {
+    name: "dyad: all-fire grounded x pure water person",
+    userAnswers: 0,
+    person: { primary: "water", secondary: null },
+    expect: { relation: "P_CONTROLS_U", score: 46, tier: "effortful" }
+  }
+];
+
 function runFixtures() {
   let pass = 0;
   console.group("Elemental Blueprint :: fixture harness");
@@ -752,9 +897,27 @@ function runFixtures() {
     if (ok) pass++;
   });
 
-  console.log(pass + "/" + FIXTURES.length + " fixtures passed");
+  DYAD_FIXTURES.forEach(function (f) {
+    const u = scoreAnswers(FIXTURES[f.userAnswers].answers);
+    const d = dyadScore(u, f.person);
+    const ok = d.relation === f.expect.relation && d.score === f.expect.score && d.tier === f.expect.tier;
+    console.assert(ok, "DYAD FAIL: " + f.name, { expected: f.expect, got: d });
+    console.log((ok ? "PASS" : "FAIL") + " :: " + f.name +
+      " [relation=" + d.relation + " score=" + d.score + " tier=" + d.tier + "]");
+    if (ok) pass++;
+  });
+
+  const canned = 'noise {"name":"Test","knownFor":"x","pct":{"wood":45,"fire":27,"earth":9,"metal":5,"water":4},"primary":"wood","secondary":"fire","evidence":["a"],"caveat":"c"} noise';
+  const pp = parsePersona(canned);
+  const ppOk = !!pp && !pp.error && pp.scores.primary === "wood" && pp.scores.secondary === "fire" && pp.scores.pct.wood === 50;
+  console.assert(ppOk, "PARSE FAIL: parsePersona", pp);
+  console.log((ppOk ? "PASS" : "FAIL") + " :: parsePersona renormalizes a 90-sum pct and retypes from numbers");
+  if (ppOk) pass++;
+
+  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 1;
+  console.log(pass + "/" + totalFix + " fixtures passed");
   console.groupEnd();
-  return pass === FIXTURES.length;
+  return pass === totalFix;
 }
 
 /* ================================================================
@@ -954,6 +1117,9 @@ function render() {
   UI._gen = (UI._gen || 0) + 1;
   (UI._timers || []).forEach(clearTimeout);
   UI._timers = [];
+  /* companion requests are scoped to a screen; a new screen gets fresh forms */
+  UI._askBusy = false;
+  UI._personaBusy = false;
   window.scrollTo(0, 0);
   const fn = {
     landing: renderLanding, framing: renderFraming, about: renderAbout,
@@ -1122,6 +1288,7 @@ function renderQuiz() {
 
 function finishQuiz() {
   UI.scores = scoreAnswers(answerArray());
+  UI._persona = null; /* dyad was computed against the previous scores */
   saveAll();
   go("reveal");
 }
@@ -1218,9 +1385,10 @@ function renderBlueprint() {
         '<p style="font-size:15.5px;line-height:1.7;color:var(--ink-70)">' + el.stress.body + "</p>") +
       section(b.practicesLabel,
         '<ol class="practices">' + el.practices.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>") +
+      personaSectionHTML() +
       askSectionHTML() +
     "</div>";
-  setupAsk();
+  setupCompanion();
 }
 
 /* ---------- ask: follow-up questions via the local companion ----------
@@ -1251,6 +1419,16 @@ function buildAskPrompt(question) {
     "\n\nTHE FRAMEWORK\n" + canon +
     "\n\nTHE USER'S RESULT (JSON)\n" + JSON.stringify(publicScores(UI.scores)) +
     (UI.profile.name ? "\nThe user goes by " + UI.profile.name + "." : "") +
+    (UI._persona ? "\n\nA PUBLIC FIGURE JUST READ (public persona) AND THE COMPUTED PAIRING\n" +
+      JSON.stringify({
+        person: {
+          name: UI._persona.read.name,
+          pct: UI._persona.read.scores.pct,
+          primary: UI._persona.read.scores.primary,
+          secondary: UI._persona.read.scores.secondary
+        },
+        dyad: UI._persona.dyad
+      }) : "") +
     (hist ? "\n\nRECENT EXCHANGES\n" + hist : "") +
     "\n\nTHE USER'S QUESTION\n" + question;
 }
@@ -1266,28 +1444,43 @@ function renderAskLog() {
   }).join("");
 }
 
-function setupAsk() {
-  const a = CONTENT.ask;
-  const form = $("#askform"), input = $("#askin"), btn = $("#askbtn"),
-        intro = $("#askintro"), status = $("#askstatus");
+/* One health check gates both companion sections (Ask + Read anyone) */
+function setupCompanion() {
   renderAskLog();
-  if (window.location.protocol === "file:") { intro.textContent = a.offline; return; }
+  renderPersona();
+  bindAsk();
+  bindPersona();
+  const gen = UI._gen; /* callbacks may land after this screen is gone */
+  const offline = function () {
+    if (UI._gen !== gen) return;
+    $("#askintro").textContent = CONTENT.ask.offline;
+    $("#personaintro").textContent = CONTENT.ask.offline;
+  };
+  if (window.location.protocol === "file:") { offline(); return; }
   const ctl = new AbortController();
   const t = setTimeout(function () { ctl.abort(); }, 2500);
   fetch("/api/health", { signal: ctl.signal }).then(function (r) {
     clearTimeout(t);
-    if (r.ok) form.hidden = false;
-    else intro.textContent = a.offline;
+    if (UI._gen !== gen) return;
+    if (r.ok) { $("#askform").hidden = false; $("#personaform").hidden = false; }
+    else offline();
   }, function () {
     clearTimeout(t);
-    intro.textContent = a.offline;
+    offline();
   });
+}
+
+function bindAsk() {
+  const a = CONTENT.ask;
+  const form = $("#askform"), input = $("#askin"), btn = $("#askbtn"),
+        status = $("#askstatus");
 
   form.addEventListener("submit", function (ev) {
     ev.preventDefault();
     const q = input.value.trim();
     if (!q || UI._askBusy) return;
     UI._askBusy = true;
+    const gen = UI._gen; /* a re-render orphans this request; drop its result */
     btn.disabled = true;
     status.hidden = false;
     status.textContent = a.thinking;
@@ -1299,6 +1492,7 @@ function setupAsk() {
       body: JSON.stringify({ prompt: buildAskPrompt(q) }),
       signal: ctl2.signal
     }).then(function (r) { return r.json(); }).then(function (j) {
+      if (UI._gen !== gen) return;
       if (j && j.answer) {
         UI.askLog.push({ q: q, a: j.answer });
         input.value = "";
@@ -1308,10 +1502,109 @@ function setupAsk() {
         status.textContent = a.error;
       }
     }).catch(function () {
+      if (UI._gen !== gen) return;
       status.textContent = a.error;
     }).finally(function () {
       clearTimeout(kt);
+      /* after a re-render the flags belong to the new screen's requests */
+      if (UI._gen !== gen) return;
       UI._askBusy = false;
+      btn.disabled = false;
+    });
+  });
+}
+
+/* ---------- read anyone: persona reads + dyad scoring ---------- */
+function personaSectionHTML() {
+  const c = CONTENT.persona;
+  return '<div class="section" id="personasec"><p class="lbl">' + c.label + "</p>" +
+    '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +
+    '<p class="micro" id="personaintro">' + c.intro + "</p>" +
+    '<form id="personaform" hidden><div class="askrow">' +
+      '<input class="askin" id="personain" maxlength="60" autocomplete="off" placeholder="' + c.placeholder + '">' +
+      '<button class="btn sm" id="personabtn" type="submit">' + c.button + "</button>" +
+    "</div></form>" +
+    '<p class="micro" id="personastatus" hidden></p>' +
+    '<div id="personabox"></div></div>';
+}
+
+function buildPersonaPrompt(name) {
+  return CONTENT.persona.rules + "\n\nTHE SUBJECT\n" + name +
+    "\n\nReturn ONLY the JSON object, nothing else.";
+}
+
+function renderPersona() {
+  const box = $("#personabox");
+  if (!box) return;
+  if (!UI._persona) { box.innerHTML = ""; return; }
+  const c = CONTENT.persona;
+  const r = UI._persona.read, d = UI._persona.dyad;
+  const sec = r.scores.secondary;
+  box.innerHTML =
+    '<div class="pcard">' +
+      '<p class="display" style="font-size:19px;color:var(--' + r.scores.primary + ')">' + esc(r.name) + "</p>" +
+      (r.knownFor ? '<p class="micro" style="margin-top:4px">' + esc(r.knownFor) + "</p>" : "") +
+      '<div style="margin:14px 0 4px;text-align:center">' +
+        pentagonSVG(r.scores, { size: 230, aria: r.name + " element chart" }) + "</div>" +
+      '<p class="mono" style="font-size:13px;color:var(--ink-70);text-align:center">' +
+        CONTENT.elements[r.scores.primary].name + " " + r.scores.pct[r.scores.primary] + "%" +
+        (sec ? " · " + CONTENT.elements[sec].name + " " + r.scores.pct[sec] + "%" : "") + "</p>" +
+      '<ul class="plain" style="margin-top:12px">' +
+        r.evidence.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+      (r.caveat ? '<p class="micro" style="margin-top:10px">' + esc(r.caveat) + "</p>" : "") +
+      '<div class="card" style="margin-top:16px">' +
+        '<p class="lbl">' + c.youX + esc(r.name) + "</p>" +
+        '<p style="margin-top:10px;font-size:15px">' + CONTENT.relations[d.relation] + "</p>" +
+        '<div class="dyadnums">' +
+          '<div class="dn"><span class="micro">' + c.stability + "</span><b>" + d.stab + "</b></div>" +
+          '<div class="dn"><span class="micro">' + c.chemistry + "</span><b>" + d.chem + "</b></div>" +
+          '<div class="dn"><span class="micro">' + c.blend + "</span><b>" + d.score + "</b></div>" +
+        "</div>" +
+        '<span class="statechip">' + CONTENT.tiers[d.tier] + "</span>" +
+        (d.trap ? '<p class="micro" style="margin-top:10px">' + c.trapBadge + "</p>" : "") +
+      "</div>" +
+      '<p class="micro" style="margin-top:12px">' + c.footer + "</p>" +
+    "</div>";
+}
+
+function bindPersona() {
+  const c = CONTENT.persona;
+  const form = $("#personaform"), input = $("#personain"), btn = $("#personabtn"),
+        status = $("#personastatus");
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    const name = input.value.trim();
+    if (!name || UI._personaBusy) return;
+    UI._personaBusy = true;
+    const gen = UI._gen; /* a re-render orphans this request; drop its result */
+    btn.disabled = true;
+    status.hidden = false;
+    status.textContent = c.thinking;
+    const ctl = new AbortController();
+    const kt = setTimeout(function () { ctl.abort(); }, 180000);
+    fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: buildPersonaPrompt(name), search: true }),
+      signal: ctl.signal
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (UI._gen !== gen) return;
+      const parsed = j && j.answer ? parsePersona(j.answer) : null;
+      if (!parsed) { status.textContent = c.error; return; }
+      if (parsed.error) { status.textContent = c.unknown; return; }
+      UI._persona = { read: parsed, dyad: dyadScore(UI.scores, parsed.scores) };
+      input.value = "";
+      status.hidden = true;
+      renderPersona();
+    }).catch(function () {
+      if (UI._gen !== gen) return;
+      status.textContent = c.error;
+    }).finally(function () {
+      clearTimeout(kt);
+      /* after a re-render the flags belong to the new screen's requests */
+      if (UI._gen !== gen) return;
+      UI._personaBusy = false;
       btn.disabled = false;
     });
   });

@@ -27,9 +27,13 @@ function json(res, code, obj) {
   res.end(body);
 }
 
-function askClaude(prompt, cb) {
-  /* prompt goes via stdin: no shell-quoting surface */
-  const child = spawn("claude", ["-p", "--output-format", "text"],
+function askClaude(prompt, search, cb) {
+  /* prompt goes via stdin: no shell-quoting surface.
+     search: whitelisted boolean that grants ONLY the WebSearch tool,
+     used for public-figure reads. */
+  const args = ["-p", "--output-format", "text"];
+  if (search === true) args.push("--allowedTools", "WebSearch");
+  const child = spawn("claude", args,
     { cwd: ROOT, shell: true, windowsHide: true });
   let out = "", err = "", done = false;
   const finish = function (e, answer) {
@@ -59,18 +63,28 @@ const server = http.createServer(function (req, res) {
   if (req.url === "/api/health") return json(res, 200, { ok: true });
 
   if (req.method === "POST" && req.url === "/api/ask") {
+    /* Cross-origin pages can fire blind text/plain POSTs without a CORS
+       preflight; browsers always attach Origin to those, so require it to
+       be ours (or absent, i.e. same-machine curl/CLI). */
+    const origin = req.headers.origin;
+    const ok = origin === "http://127.0.0.1:" + PORT ||
+               origin === "http://localhost:" + PORT;
+    if (origin && !ok) return json(res, 403, { error: "forbidden origin" });
     let body = "";
     req.on("data", function (d) {
       body += d;
       if (body.length > 200000) req.destroy();
     });
     req.on("end", function () {
-      let prompt = "";
-      try { prompt = String(JSON.parse(body).prompt || ""); }
-      catch (e) { return json(res, 400, { error: "bad json" }); }
+      let prompt = "", search = false;
+      try {
+        const payload = JSON.parse(body);
+        prompt = String(payload.prompt || "");
+        search = payload.search === true;
+      } catch (e) { return json(res, 400, { error: "bad json" }); }
       if (!prompt.trim()) return json(res, 400, { error: "empty prompt" });
       const t0 = Date.now();
-      askClaude(prompt, function (e, answer) {
+      askClaude(prompt, search, function (e, answer) {
         if (e) return json(res, 502, { error: e.message });
         json(res, 200, { answer: answer, ms: Date.now() - t0 });
       });
