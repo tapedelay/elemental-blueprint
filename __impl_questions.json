@@ -1,0 +1,312 @@
+[
+  {
+    "id": 1,
+    "text": "A completely free Saturday appears, zero obligations. Your honest first move:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "M",
+        "text": "Start the project I have been itching to launch"
+      },
+      {
+        "el": "fire",
+        "val": "M",
+        "text": "Text a few people; something fun will assemble itself"
+      },
+      {
+        "el": "earth",
+        "val": "M",
+        "text": "Slow morning, cook something real, tend the house"
+      },
+      {
+        "el": "metal",
+        "val": "M",
+        "text": "Finally sort the thing that has been quietly bothering me"
+      },
+      {
+        "el": "water",
+        "val": "M",
+        "text": "Long walk alone with a notebook and no destination"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "text": "Someone close to you is upset with you and goes quiet. Before you can edit yourself, you:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "S",
+        "text": "Push to resolve it right now; the silence feels like a wall to break"
+      },
+      {
+        "el": "fire",
+        "val": "S",
+        "text": "Fill the air with warmth, jokes, affection, anything"
+      },
+      {
+        "el": "earth",
+        "val": "S",
+        "text": "Start doing things for them and checking in, repeatedly"
+      },
+      {
+        "el": "metal",
+        "val": "S",
+        "text": "Retreat into being technically correct"
+      },
+      {
+        "el": "water",
+        "val": "S",
+        "text": "Go still and quietly build a theory of what this really means"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "text": "What quietly offends you most in other people:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "N",
+        "text": "Passivity; people who will not act"
+      },
+      {
+        "el": "fire",
+        "val": "N",
+        "text": "Coldness; people who will not play or feel"
+      },
+      {
+        "el": "earth",
+        "val": "N",
+        "text": "Selfishness; people who will not show up for their own"
+      },
+      {
+        "el": "metal",
+        "val": "N",
+        "text": "Sloppiness; people who do not care about doing it right"
+      },
+      {
+        "el": "water",
+        "val": "N",
+        "text": "Shallowness; people who will not go beneath the surface"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "text": "A project you care about takes a real hit. The best version of your first 24 hours:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "M",
+        "text": "Attack it from a new angle; motion is medicine"
+      },
+      {
+        "el": "fire",
+        "val": "M",
+        "text": "Talk it through with someone until it gets lighter"
+      },
+      {
+        "el": "earth",
+        "val": "M",
+        "text": "Steady the basics first: sleep, food, people, then reassess"
+      },
+      {
+        "el": "metal",
+        "val": "M",
+        "text": "Audit the failure, rewrite the standard, cut what broke"
+      },
+      {
+        "el": "water",
+        "val": "M",
+        "text": "Step back far enough to ask whether the goal was even right"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "text": "Same hit, worst version of you:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "S",
+        "text": "Bulldoze ahead angry and break something that was working"
+      },
+      {
+        "el": "fire",
+        "val": "S",
+        "text": "Spin up noise and distraction until I am exhausted"
+      },
+      {
+        "el": "earth",
+        "val": "S",
+        "text": "Freeze in worry and manage everyone else's reactions instead"
+      },
+      {
+        "el": "metal",
+        "val": "S",
+        "text": "Go cold, perfectionistic, privately contemptuous"
+      },
+      {
+        "el": "water",
+        "val": "S",
+        "text": "Disappear into my head for days and call it processing"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "text": "A group you are part of is stuck and circling. You naturally become:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "M",
+        "text": "The one who forces a decision"
+      },
+      {
+        "el": "fire",
+        "val": "M",
+        "text": "The one who revives the room"
+      },
+      {
+        "el": "earth",
+        "val": "M",
+        "text": "The one who checks that everyone is actually okay"
+      },
+      {
+        "el": "metal",
+        "val": "M",
+        "text": "The one who structures the mess into steps"
+      },
+      {
+        "el": "water",
+        "val": "M",
+        "text": "The one who names the deeper thing nobody said"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "text": "Your honest relationship to rules:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "S",
+        "text": "Speed limits; I break the dumb ones without guilt"
+      },
+      {
+        "el": "fire",
+        "val": "S",
+        "text": "Mood-killers; I would rather charm my way around them"
+      },
+      {
+        "el": "earth",
+        "val": "M",
+        "text": "How we keep each other safe; I uphold the caring ones"
+      },
+      {
+        "el": "metal",
+        "val": "M",
+        "text": "Mostly written for reasons people never bothered to learn"
+      },
+      {
+        "el": "water",
+        "val": "S",
+        "text": "I comply on the surface and keep my real opinion submerged"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "text": "What rest looks like when you actually let yourself have it:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "N",
+        "text": "A different kind of doing; stillness is not rest to me"
+      },
+      {
+        "el": "fire",
+        "val": "M",
+        "text": "A full table, laughter, people I love"
+      },
+      {
+        "el": "earth",
+        "val": "S",
+        "text": "Hard to take until everyone else is settled first"
+      },
+      {
+        "el": "metal",
+        "val": "S",
+        "text": "Impossible inside chaos; order first, then I can stop"
+      },
+      {
+        "el": "water",
+        "val": "M",
+        "text": "Silence, one idea, nobody talking"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "text": "Someone you love is struggling. Your first instinct:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "M",
+        "text": "Remove the obstacle for them; act on their behalf"
+      },
+      {
+        "el": "fire",
+        "val": "M",
+        "text": "Lift them; energize, encourage, make them laugh again"
+      },
+      {
+        "el": "earth",
+        "val": "M",
+        "text": "Hold them; presence, food, time, no agenda"
+      },
+      {
+        "el": "metal",
+        "val": "M",
+        "text": "Solve it; find the real problem and hand them the correct plan"
+      },
+      {
+        "el": "water",
+        "val": "M",
+        "text": "Understand it; ask the one question that reframes everything"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "text": "The fear you would least like to admit out loud:",
+    "opts": [
+      {
+        "el": "wood",
+        "val": "N",
+        "text": "Being trapped, stalled, made to wait forever"
+      },
+      {
+        "el": "fire",
+        "val": "N",
+        "text": "Being unloved, unfelt, left outside the warmth"
+      },
+      {
+        "el": "earth",
+        "val": "N",
+        "text": "Being needed by no one, or failing the people I hold"
+      },
+      {
+        "el": "metal",
+        "val": "N",
+        "text": "Being exposed as flawed under real scrutiny"
+      },
+      {
+        "el": "water",
+        "val": "N",
+        "text": "Being fully seen and then drained, or finding out none of it meant anything"
+      }
+    ]
+  }
+]
