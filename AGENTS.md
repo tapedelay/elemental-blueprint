@@ -60,6 +60,7 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 - Ask companion (SPEC 11a) and Read anyone persona reads + local dyad scoring (SPEC 11b), both hardened by multi-agent review: Origin gate, generation guards, em-dash sanitizer (`cleanStr`), busy-flag lifecycle.
 - Co-primary tie handling (SPEC section 3 amendment): display-resolution ties show both elements as primary everywhere, dyad math goes symmetric. Derived via `isCoPrimary()` from pct, never stored, so old saves/codes need no migration.
 - Direct entry, blueprint-code loading, saved-results store (SPEC 11c), including forged-code rejection in `decodeBlueprint()`.
+- Repo is pushed to GitHub: private `tapedelay/elemental-blueprint`, local `master` in sync with `origin/master` (verified 2026-07-09, at this commit). Direct-to-master pushes, no branches or PRs, per portfolio convention.
 
 **Not started (SPEC phases 2-4):**
 - Phase 2: the 25 combination profiles and ranked matching. The dyad engine (`GEN`/`KE`/`REL`/`relationOf`/`dyadScore`) already exists as the seed; what is missing is the 25 written combo profiles and a ranking screen. SPEC section 10 requires writing all 25 in one session for voice consistency.
@@ -69,15 +70,13 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 **Untested / known gaps:**
 - No real-device pass yet (iPad/phone). The quiz's long-press "also me" gesture and the 375 px layout are the risk areas.
 - The relation *label* on a co-primary pairing describes the canonical-first channel only (the score itself is symmetric); acceptable, but a future copy pass could name both channels.
-- Repo is local-only: no remote exists (GitHub creation was proposed as private `tapedelay/elemental-blueprint` but has not been approved).
 
 ## 5. Next steps, in priority order
 
 1. **Phase 2, matching engine content.** Write all 25 element-pair combo profiles in a single session (SPEC section 10, voice-consistency rule) and add the ranked-matches screen using the existing `dyadScore`. Ground truth: SPEC section 4 tables and pseudocode; respect the documented deviation that a specific-person read never assesses the subject's maturity, but ranked hypothetical matching per spec may apply the age/polarity modifiers that `dyadScore` currently omits.
 2. **Real-device pass.** Run the full quiz on an iPad/phone: long-press "also me" (450 ms threshold, `UI._suppressClick` guard), reveal count-up, direct-entry number inputs, form focus states. Fix what breaks.
 3. **Send it to the client (her brother).** The app is feature-complete for a first review; his SPEC section 11 open questions (final name, friendship mode, trap-badge bluntness, languages) block Phase 2 copy decisions.
-4. **Push to GitHub** once the owner approves creating private `tapedelay/elemental-blueprint`; then push master as-is (commit and push directly to master; this portfolio never uses branches or PRs).
-5. **Phase 1.5 leftovers (optional, from a first-principles review):** live conditional-flow diagnostics drawn on the pentagon (generation/control/drain arrows from the user's actual numbers) and shadow-matched practice suggestions.
+4. **Phase 1.5 leftovers (optional, from a first-principles review):** live conditional-flow diagnostics drawn on the pentagon (generation/control/drain arrows from the user's actual numbers) and shadow-matched practice suggestions.
 
 ## 6. Decisions and gotchas
 
@@ -100,5 +99,4 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 
 1. Has your brother (the spec author) seen the current build? His SPEC section 11 answers (final name, friendship mode, trap-badge bluntness, languages) gate Phase 2 copy.
 2. Should ranked matching (Phase 2) apply the SPEC section 4 age-band and polarity modifiers? `dyadScore` deliberately omits them for specific-person reads; the spec implies they belong to hypothetical ranked matches.
-3. Create the private GitHub repo `tapedelay/elemental-blueprint` and push? The repo is currently local-only by explicit earlier decision to wait for your go-ahead.
-4. Is `__impl_questions.json` (the WIP question-bank draft) worth keeping in the repo, or should it be deleted now that the bank lives in CONTENT?
+3. Is `__impl_questions.json` (the WIP question-bank draft) worth keeping in the repo, or should it be deleted now that the bank lives in CONTENT?
