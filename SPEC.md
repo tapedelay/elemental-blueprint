@@ -317,6 +317,7 @@ Every feature is usable without taking the assessment, and no result is ever sil
 - **Saved results.** Every finished result is listed immediately; rows can be renamed (renaming the open result renames it everywhere) or deleted.
 - **Save image.** Footer "Save image" and Compare "Save pairing image" export a 1080x1350 pixel-art card (crystal scaled up pixelated, scanlines) via share sheet or download.
 - **Look.** Lo-poly element crystal (software-rasterized, dithered, integer-snapped), once-per-session boot, stepped fades, blinking start cursor.
+- **Retro / Modern switch (2026-10-06).** A two-segment switch at the top of every screen, one word per option. Retro (default) applies the Saturn lo-poly language everywhere: plates with hard offset slabs and bevels, mesh-dither card fills, segmented rules, square section markers, aliased mono, and a live crystal in the quiz header that takes shape as answers come in. Modern is the same app clean and minimal: sans throughout, sentence case, rounded cards and pill controls, no scanlines or boot, smooth fades, and the crystals rendered at device resolution without dither. Stored per viewer in localStorage (`eb.look`); switching keeps the reader's place and any open comparison. Image export follows the active look.
 
 ## 11. Open questions for the client
 

@@ -68,11 +68,12 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 - Matches: `comboScore`/`rankMatches` with age/polarity modifiers, The Pull / The Hold, detail sheets.
 - Compare: both-direction cards, `cycleEdges` arrow pentagon, orbit scene, `pairingReport`; Read anyone shares `dyadCardHTML`.
 - 25 partner-pattern profiles (`CONTENT.combos`, `comboKey`), folded into `pairingReport`, Matches details, Compare, and the Blueprint "As a partner" section; a fixture checks all 25 exist and pass the banned-vocabulary/em-dash rules.
+- Retro / Modern look switch (`html[data-look]`, `setLook`/`renderLook`, localStorage `eb.look`): all modern styling is `html[data-look="modern"]` overrides at the end of `<style>`; crystals/orbit pick resolution and dither from `isModern()` at creation, so `setLook` re-renders the screen (anchoring scroll, restoring an open Compare via `UI._cmp`).
 - Lo-poly crystal renderer (`crystalVerts`/`rasterCrystal`/`drawCrystal`/`drawOrbit`, `mountCrystals` under the `_gen` guard), boot, image export (`saveCardImage`).
 
 **Still open:**
 - Friendship/work lens, PWA manifest, question bank growth toward ~20 items.
-- `index.html` is ~173 KB, over SPEC section 10's ~150 KB guideline (accepted 2026-10-06 for the 25 profiles; the guideline is soft).
+- `index.html` is ~182 KB, over SPEC section 10's ~150 KB guideline (accepted 2026-10-06 for the 25 profiles; the guideline is soft).
 
 **Untested / known gaps:**
 - No real-device pass yet (iPad/phone). The quiz's long-press "also me" gesture and the 375 px layout are the risk areas.
