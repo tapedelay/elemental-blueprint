@@ -6,6 +6,10 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#08090A">
 <meta name="description" content="A self-knowledge instrument built on five behavioral patterns: how you love, work, and break.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Elemental Blueprint">
+<meta property="og:description" content="A pattern language for how you love, work, and break. Five elements, read as behavior.">
+<meta property="og:type" content="website">
 <title>Elemental Blueprint</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308090A'/%3E%3Cpath d='M16 4 L27.4 12.3 L23.1 25.7 L8.9 25.7 L4.6 12.3 Z' fill='none' stroke='%23E8EDEA' stroke-width='2'/%3E%3C/svg%3E">
 <style>
@@ -1687,6 +1691,11 @@ function runFixtures() {
    ================================================================ */
 const STORE_KEY = "eb.v1";
 const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* Ask and Read anyone need server.js on this machine. On a hosted copy
+   they are left out entirely rather than shown as a dead hint.
+   ?hosted simulates a hosted copy for testing. */
+const LOCAL = (location.protocol === "file:" || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) &&
+  !new URLSearchParams(location.search).has("hosted");
 
 const UI = {
   screen: "landing",
@@ -3197,6 +3206,7 @@ function bindCompare() {
    The static app stays self-contained; when server.js is running it
    bridges /api/ask to the Claude Code CLI on the user's own login. */
 function askSectionHTML() {
+  if (!LOCAL) return "";
   const a = CONTENT.ask;
   return '<div class="section" id="asksec"><p class="lbl">' + a.label + "</p>" +
     '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +
@@ -3249,6 +3259,7 @@ function renderAskLog() {
 
 /* One health check gates both companion sections (Ask + Read anyone) */
 function setupCompanion() {
+  if (!LOCAL) return;
   renderAskLog();
   renderPersona();
   bindAsk();
@@ -3319,6 +3330,7 @@ function bindAsk() {
 
 /* ---------- read anyone: persona reads + dyad scoring ---------- */
 function personaSectionHTML() {
+  if (!LOCAL) return "";
   const c = CONTENT.persona;
   return '<div class="section" id="personasec"><p class="lbl">' + c.label + "</p>" +
     '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +

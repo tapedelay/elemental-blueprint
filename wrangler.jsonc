@@ -1,0 +1,8 @@
+// Cloudflare deploy: only index.html is published. The build step copies it
+// into dist/ so SPEC.md, AGENTS.md, server.js and the rest never go public.
+// Build command (Workers Builds or Pages): mkdir -p dist && cp index.html dist/
+{
+  "name": "elemental-blueprint",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" }
+}
