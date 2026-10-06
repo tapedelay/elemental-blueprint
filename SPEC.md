@@ -319,6 +319,15 @@ Every feature is usable without taking the assessment, and no result is ever sil
 - **Look.** Lo-poly element crystal (software-rasterized, dithered, integer-snapped), once-per-session boot, stepped fades, blinking start cursor.
 - **Retro / Modern switch (2026-10-06).** A two-segment switch at the top of every screen, one word per option. Retro (default) applies the Saturn lo-poly language everywhere: plates with hard offset slabs and bevels, mesh-dither card fills, segmented rules, square section markers, aliased mono, and a live crystal in the quiz header that takes shape as answers come in. Modern is the same app clean and minimal: sans throughout, sentence case, rounded cards and pill controls, no scanlines or boot, smooth fades, and the crystals rendered at device resolution without dither. Stored per viewer in localStorage (`eb.look`); switching keeps the reader's place and any open comparison. Image export follows the active look.
 
+## 11e. Lo-poly graphics that carry meaning (added 2026-10-06, owner direction: retro is the direction)
+
+The Saturn look now does informational work, not just decoration:
+- **State as motion.** The Blueprint crystal moves with the state: Grounded turns slow and level, Integrating sways, Reactive spins fast and shakes in stepped 10 fps jolts. Compare's orbit uses each person's state too.
+- **State gauge.** A 20-cell segmented gauge under the state chip (Reveal and Blueprint), split at the .42 / .62 thresholds and filled to `maturity.overall`, with the leading cell blinking. Shows where in the band a result sits, not just which band.
+- **HUD bars.** Stability, chemistry and blend render as 10-cell segmented bars (a dithered half cell for the remainder) with the number beside them, in Compare, Read anyone and match details.
+- **Relation glyph.** A 44x12 pixel glyph: your element gem left, theirs right, the cycle between them as an arrow (solid feeds, dashed checks, double line for a shared element), colored by the acting element. Shown beside every relation line and in every match row.
+- **Scannable matches.** Each of the 25 rows gets a still lo-poly crystal of that partner pattern, the relation glyph, and its rank on the other list ("Hold #2" in The Pull, "Pull #7" in The Hold), so the gap between the lists is visible row by row.
+
 ## 11. Open questions for the client
 
 1. Is "Elemental Blueprint" the final name, or working title?
