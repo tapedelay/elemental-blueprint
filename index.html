@@ -156,10 +156,8 @@ input.name:focus{border-color:var(--ink)}
 .hud.big .bar i{height:13px}
 .relline{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:15px}
 canvas.glyph{width:66px;height:18px;flex-shrink:0;image-rendering:pixelated;image-rendering:crisp-edges}
-html[data-look="retro"] .gauge i:not(.on):not(.here),html[data-look="retro"] .bar i:not(.on):not(.half){
+.gauge i:not(.on):not(.here),.bar i:not(.on):not(.half){
   background:repeating-conic-gradient(rgba(244,247,245,.16) 0% 25%,transparent 0% 50%);background-size:2px 2px}
-html[data-look="modern"] .gauge i,html[data-look="modern"] .bar i{border-radius:2px}
-html[data-look="modern"] .gauge i.here{animation:none}
 @media (prefers-reduced-motion: reduce){.gauge i.here{animation:none}}
 
 /* matches */
@@ -258,87 +256,29 @@ footer#foot{border-top:1px solid var(--ink-12)}
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
 }
 
-/* ============================================================
-   LOOKS · html[data-look] is "retro" (default) or "modern".
-   Retro: Saturn/PS1 lo-poly plates, mesh-dither fills, hard
-   offset slabs, segmented rules, aliased mono. Modern: the same
-   app clean and minimal, sans throughout, rounded, smooth.
-   ============================================================ */
-#top{max-width:600px;margin:0 auto;padding:14px 20px 0;display:flex;justify-content:flex-end}
-.looksw{display:inline-flex;border:1px solid var(--ink-25)}
-.looksw button{font:700 10.5px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-55);
-  background:transparent;border:none;padding:0 13px;min-height:36px;cursor:pointer;transition:color var(--fast),background var(--fast)}
-.looksw button:hover{color:var(--ink)}
-.looksw button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
-
-/* retro: everything is a lo-poly plate */
-html[data-look="retro"] .display,html[data-look="retro"] .lbl,html[data-look="retro"] .mono,
-html[data-look="retro"] .btn,html[data-look="retro"] .looksw button{-webkit-font-smoothing:none}
-html[data-look="retro"] .btn{box-shadow:4px 4px 0 rgba(244,247,245,.22)}
-html[data-look="retro"] .btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(244,247,245,.22)}
-html[data-look="retro"] .chip{box-shadow:3px 3px 0 rgba(244,247,245,.1)}
-html[data-look="retro"] .opt{box-shadow:3px 3px 0 rgba(244,247,245,.07)}
-html[data-look="retro"] .opt.pick{box-shadow:inset 0 0 0 1px var(--ink),3px 3px 0 rgba(244,247,245,.18)}
-html[data-look="retro"] .statechip{box-shadow:3px 3px 0 rgba(244,247,245,.2)}
-html[data-look="retro"] .card,html[data-look="retro"] .pcard{
+/* Saturn lo-poly plates: hard offset slabs, bevels, mesh-dither fills,
+   segmented rules, square section markers, aliased mono */
+.display,.lbl,.mono,
+.btn{-webkit-font-smoothing:none}
+.btn{box-shadow:4px 4px 0 rgba(244,247,245,.22)}
+.btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:2px 2px 0 rgba(244,247,245,.22)}
+.chip{box-shadow:3px 3px 0 rgba(244,247,245,.1)}
+.opt{box-shadow:3px 3px 0 rgba(244,247,245,.07)}
+.opt.pick{box-shadow:inset 0 0 0 1px var(--ink),3px 3px 0 rgba(244,247,245,.18)}
+.statechip{box-shadow:3px 3px 0 rgba(244,247,245,.2)}
+.card,.pcard{
   background-image:repeating-conic-gradient(rgba(244,247,245,.04) 0% 25%,transparent 0% 50%);background-size:4px 4px;
   box-shadow:inset 1px 1px 0 rgba(244,247,245,.12),4px 4px 0 rgba(244,247,245,.07)}
-html[data-look="retro"] .rule{width:36px;height:4px;
+.rule{width:36px;height:4px;
   -webkit-mask:repeating-linear-gradient(90deg,#000 0 6px,transparent 6px 8px);mask:repeating-linear-gradient(90deg,#000 0 6px,transparent 6px 8px)}
-html[data-look="retro"] .section>.lbl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:9px;
+.section>.lbl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:9px;
   background:currentColor;vertical-align:1px}
-html[data-look="retro"] .askin{background-image:repeating-conic-gradient(rgba(244,247,245,.03) 0% 25%,transparent 0% 50%);background-size:4px 4px}
-html[data-look="retro"] .looksw{box-shadow:3px 3px 0 rgba(244,247,245,.1)}
+.askin{background-image:repeating-conic-gradient(rgba(244,247,245,.03) 0% 25%,transparent 0% 50%);background-size:4px 4px}
 .qcrystal{display:inline-block;vertical-align:middle}
 
-/* modern: clean, minimal, smooth */
-html[data-look="modern"]{--paper:#0B0C0E;--mono:var(--body)}
-html[data-look="modern"] body::after{display:none}
-html[data-look="modern"] .screen{animation:fin .22s ease}
-html[data-look="modern"] #boot{display:none}
-html[data-look="modern"] .display{text-transform:none;letter-spacing:-.01em;font-weight:650}
-html[data-look="modern"] h1.display{font-size:clamp(26px,7vw,36px)}
-html[data-look="modern"] .revealname,html[data-look="modern"] .bpname{letter-spacing:-.015em}
-html[data-look="modern"] .lbl{font-size:11.5px;letter-spacing:.07em;font-weight:600}
-html[data-look="modern"] .micro{font-size:13px;line-height:1.55}
-html[data-look="modern"] .btn{border:none;border-radius:999px;background:var(--ink);color:var(--paper);
-  text-transform:none;letter-spacing:0;font-size:15px;font-weight:600;padding:15px 28px}
-html[data-look="modern"] .btn:hover{background:#fff;color:var(--paper)}
-html[data-look="modern"] .btn:disabled:hover{background:var(--ink);color:var(--paper)}
-html[data-look="modern"] .btn.sm{padding:13px 20px}
-html[data-look="modern"] .btn.start::before{content:none}
-html[data-look="modern"] .linkbtn{text-transform:none;letter-spacing:0;font-size:13.5px;border-bottom-color:transparent}
-html[data-look="modern"] .linkbtn:hover{border-bottom-color:var(--ink-55)}
-html[data-look="modern"] .chip{border-radius:999px;border-color:var(--ink-12);background:rgba(255,255,255,.03)}
-html[data-look="modern"] .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink)}
-html[data-look="modern"] .opt{border-radius:14px;border-color:var(--ink-12);background:rgba(255,255,255,.025);padding-left:18px}
-html[data-look="modern"] .opt::before{content:none}
-html[data-look="modern"] .opt:hover{border-color:var(--ink-25)}
-html[data-look="modern"] .opt.pick{background:rgba(255,255,255,.1);background-image:none;box-shadow:none;border-color:var(--ink-55)}
-html[data-look="modern"] .opt.also{border-style:solid;border-color:var(--ink-25);background:rgba(255,255,255,.05)}
-html[data-look="modern"] .opt .tag{letter-spacing:.04em;text-transform:none;font-size:11.5px}
-html[data-look="modern"] .card,html[data-look="modern"] .pcard{border-radius:16px;border-color:var(--ink-12);background:rgba(255,255,255,.03)}
-html[data-look="modern"] .statechip{border-radius:999px;border-width:1px;letter-spacing:.08em}
-html[data-look="modern"] .rule{border-radius:2px}
-html[data-look="modern"] .dots i{border-radius:50%}
-html[data-look="modern"] .askin{border-radius:12px;border-color:var(--ink-12);background:rgba(255,255,255,.03)}
-html[data-look="modern"] ul.plain li::before{border-radius:50%}
-html[data-look="modern"] .penta .ringseg,html[data-look="modern"] .penta .chord,html[data-look="modern"] .penta .poly,
-html[data-look="modern"] .penta .facet,html[data-look="modern"] .penta .spoke,html[data-look="modern"] .penta .vsq,
-html[data-look="modern"] .penta line,html[data-look="modern"] .penta polygon{shape-rendering:geometricPrecision}
-html[data-look="modern"] .penta .poly{stroke-linejoin:round}
-html[data-look="modern"] .penta .vsq{rx:3.5px}
-html[data-look="modern"] .penta .vname{letter-spacing:.06em}
-html[data-look="modern"] canvas.crystal,html[data-look="modern"] canvas.orbit{image-rendering:auto}
-html[data-look="modern"] .mname,html[data-look="modern"] .savedopen b{text-transform:none;letter-spacing:0;font-size:15px}
-html[data-look="modern"] .mtier{text-transform:none;letter-spacing:0;font-size:12.5px}
-html[data-look="modern"] .stressname,html[data-look="modern"] .qnum{letter-spacing:.06em}
-html[data-look="modern"] .looksw{border-radius:999px;padding:3px;border-color:var(--ink-12);background:rgba(255,255,255,.04)}
-html[data-look="modern"] .looksw button{border-radius:999px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;min-height:32px}
 </style>
 </head>
 <body>
-<header id="top"></header>
 <main id="app"></main>
 <footer id="foot"></footer>
 <div id="toast" hidden></div>
@@ -795,12 +735,6 @@ const CONTENT = {
   weather: {
     aria: "State gauge: {state}, {pct} of the way from reactive to grounded",
     caption: "Where your answers put you right now. The crystal moves with it: steady when grounded, restless while integrating, shaking when reactive."
-  },
-
-  look: {
-    aria: "Look",
-    retro: "Retro",
-    modern: "Modern"
   },
 
   image: {
@@ -1978,46 +1912,6 @@ function pentagonSVG(scores, opts) {
    reaches out by that element's share: the crystal's shape is the
    data, and each facet carries the colors of the two elements it
    spans, so a color still only ever means its element. */
-/* ---------- look: retro (default) or modern, a per-viewer preference ---------- */
-const LOOK_KEY = "eb.look";
-function isModern() { return document.documentElement.dataset.look === "modern"; }
-function storedLook() {
-  try { return localStorage.getItem(LOOK_KEY) === "modern" ? "modern" : "retro"; }
-  catch (e) { return "retro"; }
-}
-function renderLook() {
-  const L = CONTENT.look;
-  const cur = isModern() ? "modern" : "retro";
-  $("#top").innerHTML = '<div class="looksw" role="group" aria-label="' + L.aria + '">' +
-    ["retro", "modern"].map(function (v) {
-      return '<button type="button" data-look="' + v + '" aria-pressed="' + (cur === v) + '">' + L[v] + "</button>";
-    }).join("") + "</div>";
-  document.querySelectorAll("#top [data-look]").forEach(function (b) {
-    b.addEventListener("click", function () { setLook(b.dataset.look); });
-  });
-}
-function setLook(v) {
-  if ((isModern() ? "modern" : "retro") === v) return;
-  try { localStorage.setItem(LOOK_KEY, v); } catch (e) { /* session-only then */ }
-  document.documentElement.dataset.look = v;
-  renderLook();
-  /* canvases are sized per look, so the screen redraws; keep the
-     reader's place, an open comparison, and focus on the switch */
-  /* the two looks lay out at different heights, so anchor on the first
-     block still on screen rather than on a pixel offset */
-  const blocks = function () { return Array.prototype.slice.call(document.querySelectorAll("#app .section, #app .card, #app h1, #app h2")); };
-  const before = blocks();
-  let ai = before.findIndex(function (el) { return el.getBoundingClientRect().bottom > 0; });
-  const atop = ai >= 0 ? before[ai].getBoundingClientRect().top : 0;
-  const cmp = UI._cmp;
-  render();
-  if (cmp && cmp.scores === UI.scores && $("#cmpbox")) renderCompare.apply(null, cmp.args);
-  const after = blocks();
-  if (ai >= 0 && after[ai]) window.scrollTo(0, window.scrollY + after[ai].getBoundingClientRect().top - atop);
-  const btn = $('#top [data-look="' + v + '"]');
-  if (btn) btn.focus({ preventScroll: true });
-}
-
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 let crystalRGB = null;
 function elementRGB() {
@@ -2042,9 +1936,7 @@ function crystalRadii(scores) {
 function crystalHTML(scores, opts) {
   opts = opts || {};
   const size = opts.size || 160;
-  /* retro renders tiny and scales up crunchy; modern renders at device resolution */
-  const res = isModern() ? Math.min(440, Math.round(size * Math.min(2, window.devicePixelRatio || 1)))
-    : (opts.res || Math.round(size / 2.6));
+  const res = opts.res || Math.round(size / 2.6); /* tiny, scaled up crunchy */
   const radii = crystalRadii(scores);
   return '<canvas class="crystal" width="' + res + '" height="' + res + '" data-r="' + radii.join(",") +
     (opts.state ? '" data-state="' + opts.state : "") + (opts.still ? '" data-still="1' : "") +
@@ -2133,15 +2025,11 @@ function rasterCrystal(fr, W) {
           if (z >= zb[idx]) continue;
           zb[idx] = z;
           const o = idx * 4;
-          if (fr.dither) {
-            const th = (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
-            for (let k = 0; k < 3; k++) {
-              const q = col[k] / 255 * 4; /* 5 levels per channel */
-              const fl = Math.floor(q);
-              px[o + k] = Math.min(4, fl + (q - fl > th ? 1 : 0)) * 63.75;
-            }
-          } else {
-            px[o] = col[0]; px[o + 1] = col[1]; px[o + 2] = col[2];
+          const th = (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+          for (let k = 0; k < 3; k++) {
+            const q = col[k] / 255 * 4; /* 5 levels per channel */
+            const fl = Math.floor(q);
+            px[o + k] = Math.min(4, fl + (q - fl > th ? 1 : 0)) * 63.75;
           }
           px[o + 3] = 255;
         }
@@ -2174,13 +2062,9 @@ function ditherLine(fr, a, b, c, dashed, faint) {
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
   const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
   let err = dx + dy, n = 0;
-  const sc = Math.max(1, Math.round(fr.w / 150)); /* dash length and weight track resolution */
   for (;;) {
-    const on = dashed ? (n % (6 * sc)) < 3 * sc : true;
-    if (on && (!faint || ((x0 + y0) & 1) === 0)) {
-      plotPx(fr, x0, y0, c);
-      if (sc > 1 && !faint) { plotPx(fr, x0 + 1, y0, c); plotPx(fr, x0, y0 + 1, c); }
-    }
+    const on = dashed ? (n % 6) < 3 : true;
+    if (on && (!faint || ((x0 + y0) & 1) === 0)) plotPx(fr, x0, y0, c);
     if (x0 === x1 && y0 === y1) break;
     const e2 = 2 * err;
     if (e2 >= dy) { err += dy; x0 += sx; }
@@ -2233,7 +2117,7 @@ function drawGlyph(cv) {
 
 function newFrame(ctx, w, h, F, D) {
   const img = ctx.createImageData(w, h);
-  return { img: img, px: img.data, zb: new Float32Array(w * h).fill(1e9), w: w, h: h, F: F, D: D, dither: !isModern() };
+  return { img: img, px: img.data, zb: new Float32Array(w * h).fill(1e9), w: w, h: h, F: F, D: D };
 }
 
 function drawCrystal(cv, t, scale) {
@@ -2251,8 +2135,7 @@ function drawCrystal(cv, t, scale) {
    between their elements are drawn as dithered lines, colored by the
    element doing the feeding or checking. */
 function orbitHTML(a, b, edges, aria) {
-  const k = isModern() ? 4 : 1;
-  return '<canvas class="orbit" width="' + 150 * k + '" height="' + 84 * k + '" data-ra="' + crystalRadii(a).join(",") +
+  return '<canvas class="orbit" width="150" height="84" data-ra="' + crystalRadii(a).join(",") +
     '" data-rb="' + crystalRadii(b).join(",") + '" data-sa="' + (a.state || "") + '" data-sb="' + (b.state || "") +
     "\" data-edges='" + JSON.stringify(edges) + "' role=\"img\" aria-label=\"" + esc(aria) + '"></canvas>';
 }
@@ -2313,7 +2196,7 @@ function bootSequence() {
   let seen = false;
   try { seen = sessionStorage.getItem("eb.boot") === "1"; sessionStorage.setItem("eb.boot", "1"); }
   catch (e) { /* storage blocked: just boot every time */ }
-  if (RM || seen || isModern()) return;
+  if (RM || seen) return;
   const el = document.createElement("div");
   el.id = "boot";
   el.innerHTML = crystalHTML(null, { size: 200, res: 64, aria: "" }) +
@@ -3014,23 +2897,21 @@ function saveCardImage(kind) {
   const g = cv.getContext("2d");
   const cs = getComputedStyle(document.documentElement);
   const col = function (e) { return cs.getPropertyValue("--" + e).trim() || "#F4F7F5"; };
-  const modern = isModern();
   const INK = "#F4F7F5", DIM = "rgba(244,247,245,.6)";
-  const MONO = modern ? "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
-    : "'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace";
-  g.fillStyle = modern ? "#0B0C0E" : "#000"; g.fillRect(0, 0, W, H);
-  g.imageSmoothingEnabled = modern;
+  const MONO = "'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace";
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+  g.imageSmoothingEnabled = false;
   const text = function (str, x, y, size, color, weight, align, spacing) {
     g.font = (weight || 700) + " " + size + "px " + MONO;
     g.fillStyle = color || INK;
     g.textAlign = align || "center";
-    if ("letterSpacing" in g) g.letterSpacing = (modern ? 0 : (spacing || 0)) + "px";
+    if ("letterSpacing" in g) g.letterSpacing = (spacing || 0) + "px";
     g.fillText(str, x, y);
   };
   /* one crystal frame, rendered small and scaled up crunchy */
   const crystal = function (scores, x, y, size, t) {
     const c = document.createElement("canvas");
-    c.width = c.height = modern ? 480 : 72;
+    c.width = c.height = 72;
     c.dataset.r = crystalRadii(scores).join(",");
     drawCrystal(c, t);
     g.drawImage(c, x - size / 2, y - size / 2, size, size);
@@ -3073,11 +2954,9 @@ function saveCardImage(kind) {
     const tw = 300; g.strokeRect(W / 2 - tw / 2, 1042, tw, 56);
   }
   text(CONTENT.image.footer.toUpperCase(), W / 2, H - 60, 18, DIM, 500, "center", 4);
-  /* scanlines last, like the screen (retro only) */
-  if (!modern) {
-    g.fillStyle = "rgba(255,255,255,.035)";
-    for (let y = 0; y < H; y += 6) g.fillRect(0, y, W, 2);
-  }
+  /* scanlines last, like the screen */
+  g.fillStyle = "rgba(255,255,255,.035)";
+  for (let y = 0; y < H; y += 6) g.fillRect(0, y, W, 2);
   const file = "elemental-blueprint-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
   cv.toBlob(function (blob) {
     if (!blob) return;
@@ -3280,7 +3159,6 @@ function edgeLines(edges, aName, bName) {
 
 function renderCompare(other, otherName, otherObserved) {
   const c = CONTENT.compare;
-  UI._cmp = { scores: UI.scores, args: [other, otherName, otherObserved] };
   /* "you" is the user's own result: if the open one is a read of
      someone else and the saved one is not, turn the pairing around */
   let A = { s: UI.scores, n: UI.profile.name || c.unnamedSelf };
@@ -3615,8 +3493,6 @@ function toast(msg) {
     window.EB = { scoreAnswers: scoreAnswers, encodeBlueprint: encodeBlueprint, decodeBlueprint: decodeBlueprint,
       manualScores: manualScores, isCoPrimary: isCoPrimary, FIXTURES: FIXTURES, CONTENT: CONTENT };
   }
-  document.documentElement.dataset.look = storedLook();
-  renderLook();
   bootSequence();
   const saved = loadAll();
   if (saved && saved.meta && saved.meta.version === 1 && saved.scores && saved.scores.primary &&
