@@ -1,8 +1,11 @@
-// Cloudflare deploy: only index.html is published. The build step copies it
-// into dist/ so SPEC.md, AGENTS.md, server.js and the rest never go public.
-// Build command (Workers Builds or Pages): mkdir -p dist && cp index.html dist/
+// Static site: index.html served at https://elements.atasha.me
+// Deploy with ./deploy.sh, which copies index.html alone into dist/, so
+// SPEC.md, AGENTS.md, server.js and the rest are never published.
 {
   "name": "elemental-blueprint",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" }
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "elements.atasha.me", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
 }

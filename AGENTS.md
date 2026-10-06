@@ -23,9 +23,9 @@ The preview/dev launch config is `.claude/launch.json` (name `elemental-blueprin
 
 Ask / Read anyone additionally require the Claude Code CLI (`claude`) installed and signed in; the server spawns `claude -p --output-format text` per request (180 s timeout, 200 KB caps).
 
-### Hosting (Cloudflare, public at elemental-blueprint.atasha.me)
+### Hosting (live at https://elements.atasha.me)
 
-Only `index.html` is published. Cloudflare builds with `mkdir -p dist && cp index.html dist/` and serves `dist/` (`wrangler.jsonc` for Workers; on Pages set output directory `dist`, framework None). Production branch `master`, so every push redeploys. On any host other than localhost/127.0.0.1/file://, `LOCAL` is false and Ask / Read anyone are omitted entirely (`?hosted` simulates this locally). The page carries `noindex`: shareable by link, kept out of search.
+Cloudflare Workers static assets, deployed from this Mac with `./deploy.sh`: it copies `index.html` alone into `dist/` and runs `npx -y wrangler@4 deploy` (wrangler is OAuth-logged-in as the owner; `npx -y wrangler@4 whoami` checks). `wrangler.jsonc` routes the custom domain `elements.atasha.me` (DNS and certificate were created by the deploy). Pushing to GitHub does NOT redeploy: run `./deploy.sh` after each change. Only `index.html` is public; SPEC.md, AGENTS.md, server.js 404 (verified 2026-10-06). On any host other than localhost/127.0.0.1/file://, `LOCAL` is false and Ask / Read anyone are omitted (`?hosted` simulates this). The page carries `noindex`: shareable by link, kept out of search.
 
 ## 3. Architecture
 
