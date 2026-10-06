@@ -328,6 +328,15 @@ The Saturn look now does informational work, not just decoration:
 - **Relation glyph.** A 44x12 pixel glyph: your element gem left, theirs right, the cycle between them as an arrow (solid feeds, dashed checks, double line for a shared element), colored by the acting element. Shown beside every relation line and in every match row.
 - **Scannable matches.** Each of the 25 rows gets a still lo-poly crystal of that partner pattern, the relation glyph, and its rank on the other list ("Hold #2" in The Pull, "Pull #7" in The Hold), so the gap between the lists is visible row by row.
 
+## 11f. Answers in the crystal motif (added 2026-10-06, owner direction)
+
+Multiple-choice boxes are replaced by the lo-poly language, colorless by rule (section 3: no element may be signalled in a question or option):
+- **Quiz answers are gem rows.** Each option carries a 9x9 pixel gem: hollow until chosen, solid and lit for the closest answer (the row lifts into a mesh plate with a hard slab), half-lit over mesh for "also me".
+- **The quiz crystal is colorless** and grows only with the number of answers, never toward the picked elements.
+- **Color arrives at the Reveal:** the crystal starts colorless and takes its element colors, the app's one moment of color disclosure.
+- **The stress check is a level meter:** four ascending steps per item (Rarely to Most days), lit up to the chosen level.
+- **Every chip** (about, direct entry) carries a small diamond, hollow or filled.
+
 ## 11. Open questions for the client
 
 1. Is "Elemental Blueprint" the final name, or working title?
