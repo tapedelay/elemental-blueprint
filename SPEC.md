@@ -337,6 +337,17 @@ Multiple-choice boxes are replaced by the lo-poly language, colorless by rule (s
 - **The stress check is a level meter:** four ascending steps per item (Rarely to Most days), lit up to the chosen level.
 - **Every chip** (about, direct entry) carries a small diamond, hollow or filled.
 
+## 11g. Release pass (2026-10-06, owner: "make it 10x cooler, then call it finished")
+
+- **Boot** reads ELEMENTS (it is the address: elements.atasha.me), typed in full via a clip reveal, over the stage. No blinking anywhere: the state gauge marks its position with a taller cell instead.
+- **Stage.** The landing and boot scene: the crystal hovers over a scrolling perspective floor grid, its shadow cut out of the grid, with the five elements orbiting as small gems in Sheng order.
+- **Reveal shockwave.** As the crystal takes its colors, one dithered ring bursts out in the primary element's color.
+- **Share links (Compare by link).** "Share my pattern" sends `https://elements.atasha.me/#p=<EB1 code>&n=<name>`. The code rides in the URL fragment, which browsers never send to the server. Opening it keeps the pattern in Saved results, shows "<name> shared their pattern" on the landing, and pairs automatically as soon as the visitor has their own result. This is the section 5 Compare flow without copy-pasting codes.
+- **Phase 4 PWA.** Web manifest, home-screen icons (including maskable and Apple touch), standalone display, a network-first service worker for offline use, and a 1200x630 preview image for link unfurls, all drawn by the app's own crystal renderer.
+- **Quality floor (section 7)** re-verified: no horizontal overflow at 320 px on any screen, reduced motion respected, no emoji, 15/15 fixtures.
+
+Still open for the client: the friendship / work lens (owner leaned yes; romance is the only lens today), growing the bank toward ~20 items, and final naming.
+
 ## 11. Open questions for the client
 
 1. Is "Elemental Blueprint" the final name, or working title?

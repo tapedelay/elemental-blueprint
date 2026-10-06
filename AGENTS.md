@@ -15,7 +15,7 @@ There is no build step, no package.json, and no dependency install. Verified too
 | Run everything | `node server.js` from this folder, then open http://localhost:8873 |
 | One-click run (Windows) | double-click `launch.bat` (Windows Terminal tab running the server + opens the browser) |
 | Static only | open `index.html` directly; everything works except Ask / Read anyone, which self-hide |
-| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `14/14 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
+| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `15/15 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
 | Server syntax check | `node --check server.js` |
 | App script syntax check | `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"` |
 
@@ -25,7 +25,7 @@ Ask / Read anyone additionally require the Claude Code CLI (`claude`) installed 
 
 ### Hosting (live at https://elements.atasha.me)
 
-Cloudflare Workers static assets, deployed from this Mac with `./deploy.sh`: it copies `index.html` alone into `dist/` and runs `npx -y wrangler@4 deploy` (wrangler is OAuth-logged-in as the owner; `npx -y wrangler@4 whoami` checks). `wrangler.jsonc` routes the custom domain `elements.atasha.me` (DNS and certificate were created by the deploy). Pushing to GitHub does NOT redeploy: run `./deploy.sh` after each change. Only `index.html` is public; SPEC.md, AGENTS.md, server.js 404 (verified 2026-10-06). On any host other than localhost/127.0.0.1/file://, `LOCAL` is false and Ask / Read anyone are omitted (`?hosted` simulates this). The page carries `noindex`: shareable by link, kept out of search.
+Cloudflare Workers static assets, deployed from this Mac with `./deploy.sh`: it copies `index.html` plus everything in `site/` (manifest, icons, `sw.js`, `og.png`) into `dist/` and runs `npx -y wrangler@4 deploy` (wrangler is OAuth-logged-in as the owner; `npx -y wrangler@4 whoami` checks). `wrangler.jsonc` routes the custom domain. Pushing to GitHub does NOT redeploy: run `./deploy.sh` after each change. Repo docs and `server.js` are never published (they 404 live). The service worker is network-first, so deploys show up on the next open; bump `CACHE` in `site/sw.js` if its file list changes. The `site/` PNGs were rendered by the app's own crystal/stage code; regenerate them the same way if the look changes. On any host other than localhost/127.0.0.1/file://, `LOCAL` is false and Ask / Read anyone are omitted (`?hosted` simulates this). The page carries `noindex`.
 
 ## 3. Architecture
 
@@ -66,12 +66,13 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 - Direct entry, blueprint-code loading, saved-results store (SPEC 11c), including forged-code rejection in `decodeBlueprint()`.
 - Repo is pushed to GitHub: private `tapedelay/elemental-blueprint`, local `master` in sync with `origin/master` (verified 2026-07-09, at this commit). Direct-to-master pushes, no branches or PRs, per portfolio convention.
 
-**Added 2026-10-06 (SPEC 11d), 14/14 fixtures:**
+**Added 2026-10-06 (SPEC 11d-11g), 15/15 fixtures:**
 - Stress check screen (`lately`) after the bank; `scoreAnswers(answers, lately)` blends it into state. Fixes state barely depending on answers.
 - Observer reads (`profile.subject`, `UI.observed`, CONTENT `other`/`o` wording), required names, saved-result rename/delete, every result listed on finish.
 - Matches: `comboScore`/`rankMatches` with age/polarity modifiers, The Pull / The Hold, detail sheets.
 - Compare: both-direction cards, `cycleEdges` arrow pentagon, orbit scene, `pairingReport`; Read anyone shares `dyadCardHTML`.
 - 25 partner-pattern profiles (`CONTENT.combos`, `comboKey`), folded into `pairingReport`, Matches details, Compare, and the Blueprint "As a partner" section; a fixture checks all 25 exist and pass the banned-vocabulary/em-dash rules.
+- Release pass (SPEC 11g): `drawStage` (landing/boot scene), reveal shockwave, share links (`parseShareHash`/`shareHash`, `takeIncoming` on load and `hashchange`, auto-pair in `renderBlueprint`), PWA files in `site/` (manifest, icons, `sw.js`, `og.png`), no blinking anywhere.
 - One look only: Saturn lo-poly retro. A Modern switch existed briefly on 2026-10-06 and was removed at the owner's request; do not reintroduce `data-look` theming without asking.
 - Informational lo-poly graphics (SPEC 11e): `CRYSTAL_MOTION` by state, `gaugeHTML`, `hudBar`, `glyphHTML`/`drawGlyph` (static, drawn by `mountCrystals`), still crystal thumbnails (`data-still`), other-list ranks in match rows.
 - Lo-poly crystal renderer (`crystalVerts`/`rasterCrystal`/`drawCrystal`/`drawOrbit`, `mountCrystals` under the `_gen` guard), boot, image export (`saveCardImage`).

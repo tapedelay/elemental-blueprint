@@ -1,5 +1,5 @@
 // Static site: index.html served at https://elements.atasha.me
-// Deploy with ./deploy.sh, which copies index.html alone into dist/, so
+// Deploy with ./deploy.sh, which copies index.html and site/ into dist/, so
 // SPEC.md, AGENTS.md, server.js and the rest are never published.
 {
   "name": "elemental-blueprint",

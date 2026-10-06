@@ -4,12 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#08090A">
+<meta name="theme-color" content="#000000">
 <meta name="description" content="A self-knowledge instrument built on five behavioral patterns: how you love, work, and break.">
 <meta name="robots" content="noindex">
 <meta property="og:title" content="Elemental Blueprint">
 <meta property="og:description" content="A pattern language for how you love, work, and break. Five elements, read as behavior.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://elements.atasha.me/">
+<meta property="og:image" content="https://elements.atasha.me/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Elements">
 <title>Elemental Blueprint</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308090A'/%3E%3Cpath d='M16 4 L27.4 12.3 L23.1 25.7 L8.9 25.7 L4.6 12.3 Z' fill='none' stroke='%23E8EDEA' stroke-width='2'/%3E%3C/svg%3E">
 <style>
@@ -155,11 +166,11 @@ canvas.gem{width:18px;height:18px;image-rendering:pixelated;image-rendering:cris
 .penta.animate .vlabel{opacity:0;animation:fin .5s ease 1.35s forwards}
 
 /* HUD: segmented bars, the state gauge, relation glyphs */
-.gauge{display:flex;gap:2px;max-width:320px;margin:16px auto 0}
+.gauge{display:flex;align-items:center;gap:2px;max-width:320px;margin:16px auto 0}
 .gauge i{flex:1;height:10px;background:var(--ink-12)}
 .gauge i.cut{margin-left:5px}
 .gauge i.on{background:var(--ink)}
-.gauge i.here{background:var(--ink);animation:blink 1.1s steps(1) infinite}
+.gauge i.here{background:var(--ink);height:18px}
 .gaugelab{display:flex;max-width:320px;margin:6px auto 0;font:700 9.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-55)}
 .gaugelab span{text-align:center}
 .gaugelab span.now{color:var(--ink)}
@@ -176,7 +187,6 @@ canvas.gem{width:18px;height:18px;image-rendering:pixelated;image-rendering:cris
 canvas.glyph{width:66px;height:18px;flex-shrink:0;image-rendering:pixelated;image-rendering:crisp-edges}
 .gauge i:not(.on):not(.here),.bar i:not(.on):not(.half){
   background:repeating-conic-gradient(rgba(244,247,245,.16) 0% 25%,transparent 0% 50%);background-size:2px 2px}
-@media (prefers-reduced-motion: reduce){.gauge i.here{animation:none}}
 
 /* matches */
 .matchrow{border-bottom:1px solid var(--ink-12)}
@@ -204,17 +214,18 @@ canvas.glyph{width:66px;height:18px;flex-shrink:0;image-rendering:pixelated;imag
 /* element crystal + boot: lo-poly software render, scaled up crunchy */
 canvas.crystal,canvas.orbit{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
 canvas.orbit{width:100%;max-width:560px;aspect-ratio:150/84;height:auto}
+canvas.stage{display:block;margin:0 auto;width:min(92vw,520px);height:auto;aspect-ratio:160/96;
+  image-rendering:pixelated;image-rendering:crisp-edges}
+.incoming{border-color:var(--ink-55)}
 #boot{position:fixed;inset:0;z-index:98;background:var(--paper);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:18px;cursor:pointer}
 #boot.out{animation:fout .24s steps(3) forwards}
-.boottitle{font-size:clamp(17px,5vw,24px);white-space:nowrap;overflow:hidden;width:0;
-  animation:type .9s steps(19) .7s forwards}
-.bootsub{opacity:0;animation:blink 1s steps(1) 1.5s infinite}
-.btn.start::before{content:"> ";animation:blink 1.1s steps(1) infinite}
-@keyframes type{to{width:calc(19ch + 1.9em)}}
-@keyframes blink{0%{opacity:1}50%{opacity:0}}
+.boottitle{font-size:clamp(22px,7vw,34px);letter-spacing:.32em;white-space:nowrap;clip-path:inset(0 100% 0 0);
+  animation:type .7s steps(8) .7s forwards}
+.bootsub{opacity:0;animation:fin .4s steps(3) 1.5s forwards}
+.btn.start::before{content:"> "}
+@keyframes type{to{clip-path:inset(0 0 0 0)}}
 @keyframes fout{to{opacity:0}}
-@media (prefers-reduced-motion: reduce){.btn.start::before{animation:none}}
 
 /* reveal sequencing */
 .fin{opacity:0;animation:fin .55s ease var(--d,0s) forwards}
@@ -310,10 +321,12 @@ const CONTENT = {
   meta: {
     app: "Elemental Blueprint",
     tagline: "A pattern language for how you love, work, and break.",
-    landingNote: "Three minutes · Nothing leaves this device",
+    landingNote: "Four minutes · Nothing leaves this device",
     disclaimer: "A self-reflection tool. Not a psychological assessment, diagnosis, or advice.",
     privacyNote: "All data stays on this device.",
-    bootLine: "Five patterns · reading"
+    bootTitle: "Elements",
+    bootLine: "Five patterns · reading",
+    url: "https://elements.atasha.me/"
   },
 
   landing: {
@@ -347,7 +360,7 @@ const CONTENT = {
     paras: [
       "This is a mirror, not a measurement of your worth. It borrows a very old pattern language, five recurring styles of moving through the world, and treats them as exactly that: patterns. How you start things. How you hold people. What happens to you under pressure, and what it takes to bring you back.",
       "It is not fortune-telling, not medicine, and not a verdict. Nothing here predicts your future or diagnoses your mind. The five styles are lenses, not boxes; you contain all of them, in your own proportions, and the proportions can change.",
-      "Answer as the person you have actually been lately, not the one you intend to become. Every option is someone's finest trait and someone's worst Tuesday; there are no right answers, only honest ones. It takes about three minutes."
+      "Answer as the person you have actually been lately, not the one you intend to become. Every option is someone's finest trait and someone's worst Tuesday; there are no right answers, only honest ones. It takes about four minutes."
     ],
     button: "Continue"
   },
@@ -760,9 +773,19 @@ const CONTENT = {
     footer: "elemental blueprint · a self-reflection tool"
   },
 
+  share: {
+    button: "Share my pattern",
+    text: "My Elemental Blueprint. Open this to see how we pair:",
+    copied: "Link copied. Send it to someone.",
+    unnamed: "Someone",
+    incoming: "{name} shared their pattern",
+    incomingHint: "Take the assessment and you will land on how the two of you pair. It stays on this device; nothing is sent back.",
+    comparedToast: "Paired with {name}"
+  },
+
   compare: {
     label: "Compare",
-    intro: "Pair this result with one you saved. To compare with someone, take the assessment a second time answering as you believe they would, and give it their name; it lands in your saved results. That result is your read of them, not them.",
+    intro: "Pair this result with one you saved. The best comparison is their own: send them your link (Share my pattern, below) and they land straight on how you pair. Or take the assessment a second time answering as you believe they would; that result is your read of them, not them.",
     empty: "No other saved results yet. Retake the assessment answering as the other person, then come back here.",
     pasteLabel: "Or paste their code",
     pasteButton: "Pair",
@@ -1257,6 +1280,23 @@ function decodeBlueprint(code) {
   return hydrateScores(j);
 }
 
+/* Share links carry a blueprint code in the URL fragment, which browsers
+   never send to the server: #p=EB1...&n=Name. Returns { code, name } or
+   null; the code itself is validated later by decodeBlueprint. */
+function parseShareHash(hash) {
+  const h = String(hash || "").replace(/^#/, "");
+  const parts = {};
+  h.split("&").forEach(function (kv) {
+    const i = kv.indexOf("=");
+    if (i > 0) { try { parts[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) { /* skip */ } }
+  });
+  if (!parts.p || !/^EB1\.[A-Za-z0-9_-]+$/.test(parts.p)) return null;
+  return { code: parts.p, name: cleanStr(parts.n || "", 24).trim() };
+}
+function shareHash(code, name) {
+  return "#p=" + code + (name ? "&n=" + encodeURIComponent(name) : "");
+}
+
 /* ---- Phase 2 seed: relations and dyad scoring (SPEC section 4) ----
    Base relation table + state blend only; the age and polarity
    modifiers apply to the ranked 25-combo matching, not to a
@@ -1662,7 +1702,16 @@ function runFixtures() {
   console.log((coOk ? "PASS" : "FAIL") + " :: all 25 partner patterns written, rule-clean, and wired into the report");
   if (coOk) pass++;
 
-  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 7;
+  const code0 = encodeBlueprint(scoreAnswers(FIXTURES[1].answers));
+  const sh = parseShareHash(shareHash(code0, "Al B."));
+  const shOk = !!sh && sh.code === code0 && sh.name === "Al B." && !!decodeBlueprint(sh.code) &&
+    parseShareHash("#p=nope") === null && parseShareHash("") === null &&
+    parseShareHash(shareHash(code0, "")).name === "";
+  console.assert(shOk, "SHARE FAIL", sh);
+  console.log((shOk ? "PASS" : "FAIL") + " :: share links roundtrip a code and name through the URL fragment");
+  if (shOk) pass++;
+
+  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 8;
   console.log(pass + "/" + totalFix + " fixtures passed");
   console.groupEnd();
   return pass === totalFix;
@@ -1956,7 +2005,7 @@ function crystalHTML(scores, opts) {
   const radii = crystalRadii(scores);
   return '<canvas class="crystal" width="' + res + '" height="' + res + '" data-r="' + radii.join(",") +
     (opts.state ? '" data-state="' + opts.state : "") + (opts.still ? '" data-still="1' : "") +
-    (opts.mono ? '" data-mono="1' : "") + (opts.reveal ? '" data-reveal="1' : "") +
+    (opts.mono ? '" data-mono="1' : "") + (opts.reveal ? '" data-reveal="1" data-p="' + scores.primary : "") +
     (opts.scale ? '" data-scale="' + opts.scale : "") +
     '" data-dir="' + (opts.dir || 1) + '" style="width:' + size + "px;height:" + size + 'px" role="img" aria-label="' +
     esc(opts.aria || "Element crystal") + '"></canvas>';
@@ -2180,6 +2229,81 @@ function drawCrystal(cv, t, scale) {
   const W = crystalVerts(radii, t, dir, sc, null, cv.dataset.state);
   const P = rasterCrystal(fr, W);
   if (!fr.mono) crystalMarkers(fr, W, P);
+  /* the moment color arrives on the Reveal: one dithered shockwave ring
+     in the primary element's color */
+  if (cv.dataset.reveal === "1" && !RM) {
+    const e = performance.now() - Number(cv.dataset.t0 || 0);
+    if (e >= 1700 && e < 2400) {
+      const k = (e - 1700) / 700, R = 3 + k * N * 0.5;
+      const c = elementRGB()[cv.dataset.p] || MONO_RGB;
+      for (let an = 0; an < 360; an += 2) {
+        const x = Math.round(N / 2 + Math.cos(an * Math.PI / 180) * R);
+        const y = Math.round(N / 2 + Math.sin(an * Math.PI / 180) * R * 0.92);
+        if (k < 0.45 || ((x + y) & 1) === 0) plotPx(fr, x, y, c);
+      }
+    }
+  }
+  ctx.putImageData(fr.img, 0, 0);
+}
+
+/* Stage: the landing and boot scene. The crystal hovers over a scrolling
+   perspective floor grid with its shadow cut out of the grid, and the
+   five elements orbit it as small gems in Sheng order. assemble (0..1)
+   grows crystal and orbit out of a point for the boot. */
+function stageHTML(aria) {
+  return '<canvas class="stage" width="160" height="96" role="img" aria-label="' + esc(aria) + '"></canvas>';
+}
+
+function drawStage(cv, t, assemble) {
+  const ctx = cv.getContext("2d");
+  const w = cv.width, h = cv.height;
+  const fr = newFrame(ctx, w, h, h * 1.45, 5.2);
+  const RGB = elementRGB();
+  const a = assemble == null ? 1 : assemble;
+  const proj = function (x, y, z) {
+    const q = fr.F / (z + fr.D);
+    return [Math.round(w / 2 + x * q), Math.round(h / 2 - y * q + h * 0.02)];
+  };
+  /* floor: lines run toward the horizon; cross lines scroll toward you */
+  const FY = -1.7, NEAR = [104, 108, 106], FAR = [58, 61, 60];
+  const scroll = (t * 0.55) % 1;
+  /* the floor stops well short of the horizon: far rows would alias into a band */
+  for (let gx = -7; gx <= 7; gx++) ditherLine(fr, proj(gx, FY, -1.6), proj(gx, FY, 8), FAR, false, true);
+  for (let gz = 0; gz <= 10; gz++) {
+    const z = gz - 1.6 + (1 - scroll);
+    if (z > 8) continue;
+    ditherLine(fr, proj(-7, FY, z), proj(7, FY, z), z < 3.5 ? NEAR : FAR, false, z >= 3.5);
+  }
+  /* shadow: the grid is cut away under the crystal, breathing with its bob */
+  const bob = Math.sin(t * 1.3) * 0.12;
+  const sc = proj(0, FY, 0);
+  const rx = Math.max(1, Math.round(1.15 * a * (1 - bob * 0.8) * fr.F / fr.D)), ry = Math.max(1, Math.round(rx * 0.2));
+  for (let y = -ry; y <= ry; y++) {
+    for (let x = -rx; x <= rx; x++) {
+      if ((x * x) / (rx * rx) + (y * y) / (ry * ry) > 1) continue;
+      const px = sc[0] + x, py = sc[1] + y;
+      if (px >= 0 && py >= 0 && px < w && py < h) fr.px[(py * w + px) * 4 + 3] = 0;
+    }
+  }
+  /* the five elements in orbit; the ones behind are drawn before the crystal */
+  const pips = CRYSTAL_ORDER.map(function (e, i) {
+    const an = t * 0.5 + i * 2 * Math.PI / 5;
+    return { e: e, x: Math.cos(an) * 2.15 * a, y: 0.2 + Math.sin(an * 2) * 0.1, z: Math.sin(an) * 1.15 * a };
+  });
+  function pip(p) {
+    const q = proj(p.x, p.y + bob, p.z), r = p.z < 0 ? 2 : 1, c = RGB[p.e];
+    for (let dy = -r; dy <= r; dy++) {
+      const half = r - Math.abs(dy);
+      for (let dx = -half; dx <= half; dx++) {
+        const k = dx <= 0 ? 1 : 0.55;
+        plotPx(fr, q[0] + dx, q[1] + dy, [c[0] * k, c[1] * k, c[2] * k]);
+      }
+    }
+  }
+  pips.filter(function (p) { return p.z >= 0; }).forEach(pip);
+  const W = crystalVerts([1, 1, 1, 1, 1], t, 1, Math.max(0.05, a), [0, bob, 0], "grounded");
+  crystalMarkers(fr, W, rasterCrystal(fr, W));
+  pips.filter(function (p) { return p.z < 0; }).forEach(pip);
   ctx.putImageData(fr.img, 0, 0);
 }
 
@@ -2228,7 +2352,7 @@ function mountCrystals() {
     cv.dataset.live = "1";
     drawCrystal(cv, 2.2);
   });
-  const items = Array.prototype.slice.call(document.querySelectorAll("canvas.crystal:not([data-live]), canvas.orbit:not([data-live])"));
+  const items = Array.prototype.slice.call(document.querySelectorAll("canvas.crystal:not([data-live]), canvas.orbit:not([data-live]), canvas.stage:not([data-live])"));
   if (!items.length) return;
   items.forEach(function (cv) { cv.dataset.live = "1"; cv.dataset.t0 = String(performance.now()); });
   const t0 = performance.now();
@@ -2240,7 +2364,9 @@ function mountCrystals() {
     if (!live.length) return;
     const t = (now - t0) / 1000 + 1.2;
     live.forEach(function (cv) {
-      if (cv.classList.contains("orbit")) drawOrbit(cv, t); else drawCrystal(cv, t);
+      if (cv.classList.contains("orbit")) drawOrbit(cv, t);
+      else if (cv.classList.contains("stage")) drawStage(cv, t);
+      else drawCrystal(cv, t);
     });
     if (!RM) requestAnimationFrame(frame);
   }
@@ -2255,8 +2381,9 @@ function bootSequence() {
   if (RM || seen) return;
   const el = document.createElement("div");
   el.id = "boot";
-  el.innerHTML = crystalHTML(null, { size: 200, res: 64, aria: "" }) +
-    '<p class="display boottitle">' + CONTENT.meta.app + "</p>" +
+  el.innerHTML = stageHTML("") +
+    '<p class="display boottitle" style="animation-timing-function:steps(' + CONTENT.meta.bootTitle.length + ')">' +
+      esc(CONTENT.meta.bootTitle) + "</p>" +
     '<p class="micro bootsub">' + CONTENT.meta.bootLine + "</p>";
   document.body.appendChild(el);
   const cv = el.querySelector("canvas");
@@ -2269,7 +2396,7 @@ function bootSequence() {
     const k = Math.min(1, t / 1.1);
     const ease = 1 - Math.pow(1 - k, 3);
     /* assembles from a point while spinning down to cruise speed */
-    drawCrystal(cv, t + (1 - ease) * 3.2, Math.max(0.05, ease));
+    drawStage(cv, t + (1 - ease) * 3.2, ease);
     requestAnimationFrame(frame);
   }
   frame(t0);
@@ -2311,6 +2438,19 @@ function render() {
   if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
 }
 
+/* A pattern someone shared by link, waiting to be paired */
+function incomingHTML() {
+  const inc = UI.incoming;
+  if (!inc) return "";
+  const S = CONTENT.share;
+  return '<div class="card incoming" style="margin:0 auto 28px;max-width:440px;text-align:left">' +
+    '<p class="lbl">' + esc(fill(S.incoming, { name: inc.name })) + "</p>" +
+    '<div style="display:flex;gap:16px;align-items:center;margin-top:10px">' +
+      crystalHTML(inc.scores, { size: 64, res: 24, state: inc.scores.state, aria: inc.name + " crystal" }) +
+      '<p style="font-size:14.5px;line-height:1.6;color:var(--ink-70)">' + S.incomingHint + "</p>" +
+    "</div></div>";
+}
+
 function renderLanding() {
   const L = CONTENT.landing;
   const profs = loadProfiles();
@@ -2336,7 +2476,8 @@ function renderLanding() {
     : "";
   $("#app").innerHTML =
     '<div class="screen center" style="padding-top:9vh">' +
-      '<div style="margin-bottom:22px">' + crystalHTML(null, { size: 168, res: 60, aria: "The five-element crystal" }) + "</div>" +
+      incomingHTML() +
+      '<div style="margin-bottom:18px">' + stageHTML("The five-element crystal, with the five elements in orbit") + "</div>" +
       '<h1 class="display">' + CONTENT.meta.app + "</h1>" +
       '<p class="lede" style="margin:16px auto 34px;max-width:34ch">' + CONTENT.meta.tagline + "</p>" +
       '<button class="btn start" id="begin">Begin</button>' +
@@ -2850,6 +2991,17 @@ function renderBlueprint() {
   bindCompare();
   renderMatches();
   setupCompanion();
+  /* someone's shared link: pair with it once, on the user's own result */
+  const inc = UI.incoming;
+  if (inc && !UI.observed && inc.code !== encodeBlueprint(UI.scores)) {
+    UI.incoming = null;
+    renderCompare(inc.scores, inc.name, false);
+    toast(fill(CONTENT.share.comparedToast, { name: inc.name }));
+    UI._timers.push(setTimeout(function () {
+      const el = $("#cmpsec");
+      if (el) el.scrollIntoView({ behavior: RM ? "auto" : "smooth", block: "start" });
+    }, 80));
+  }
 }
 
 /* The user's own partner pattern, from the same 25 profiles */
@@ -3055,7 +3207,7 @@ function hudBar(label, value, big) {
 
 /* 20 cells across overall maturity 0..1, split at the state thresholds
    (cells 0-7 reactive, 8-11 integrating, 12-19 grounded), filled up to
-   where this result sits; the leading cell blinks */
+   where this result sits; the leading cell stands taller */
 function gaugeHTML(s) {
   const W = CONTENT.weather;
   const n = 20;
@@ -3514,6 +3666,7 @@ function renderFooter() {
           '<button class="linkbtn" id="f-retake">' + f.retake + "</button>" +
           '<button class="linkbtn" id="f-copy">' + f.copyCode + "</button>" +
           '<button class="linkbtn" id="f-img">' + CONTENT.image.button + "</button>" +
+          (UI.observed ? "" : '<button class="linkbtn" id="f-share">' + CONTENT.share.button + "</button>") +
           '<button class="linkbtn" id="f-results">' + f.results + "</button>" +
           '<button class="linkbtn" id="f-erase">' + f.erase + "</button>" +
         "</div>"
@@ -3528,6 +3681,15 @@ function renderFooter() {
     });
     $("#f-results").addEventListener("click", function () { go("landing"); });
     $("#f-img").addEventListener("click", function () { saveCardImage("single"); });
+    if ($("#f-share")) $("#f-share").addEventListener("click", function () {
+      const S = CONTENT.share;
+      const link = CONTENT.meta.url + shareHash(encodeBlueprint(UI.scores), UI.profile.name);
+      if (navigator.share) {
+        navigator.share({ title: CONTENT.meta.app, text: S.text, url: link }).catch(function () { /* cancelled */ });
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(function () { toast(S.copied); }, function () { toast(link); });
+      } else { toast(link); }
+    });
     $("#f-copy").addEventListener("click", function () {
       const code = encodeBlueprint(UI.scores);
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -3551,6 +3713,25 @@ function toast(msg) {
   toastTimer = setTimeout(function () { t.hidden = true; }, 2200);
 }
 
+/* Read a shared pattern from the URL fragment, keep it in Saved
+   results, and clear the fragment so a reload does not pair again. */
+function takeIncoming() {
+  const shared = parseShareHash(window.location.hash);
+  if (!shared) return false;
+  const sc = decodeBlueprint(shared.code);
+  if (sc) {
+    UI.incoming = { scores: sc, name: shared.name || CONTENT.share.unnamed, code: shared.code };
+    const list = loadProfiles();
+    if (!list.some(function (p) { return p.code === shared.code; })) {
+      list.push({ name: UI.incoming.name, observed: false, shared: true, code: shared.code,
+        scores: publicScores(sc), savedAt: new Date().toISOString().slice(0, 10) });
+      saveProfiles(list);
+    }
+  }
+  try { history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) { /* file:// */ }
+  return !!sc;
+}
+
 /* ---------- init ---------- */
 (function init() {
   const params = new URLSearchParams(window.location.search);
@@ -3558,6 +3739,14 @@ function toast(msg) {
     runFixtures();
     window.EB = { scoreAnswers: scoreAnswers, encodeBlueprint: encodeBlueprint, decodeBlueprint: decodeBlueprint,
       manualScores: manualScores, isCoPrimary: isCoPrimary, FIXTURES: FIXTURES, CONTENT: CONTENT };
+  }
+  takeIncoming();
+  /* a link opened in a tab that already has the app: pair without a reload */
+  window.addEventListener("hashchange", function () {
+    if (takeIncoming()) go(UI.scores && !UI.observed ? "blueprint" : "landing");
+  });
+  if (!LOCAL && "serviceWorker" in navigator && window.location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* offline install is optional */ });
   }
   bootSequence();
   const saved = loadAll();
