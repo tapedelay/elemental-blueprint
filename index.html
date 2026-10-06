@@ -1364,7 +1364,11 @@ function renderLanding() {
       savedList +
       '<p class="micro" style="margin-top:26px">' + CONTENT.meta.landingNote + "</p>" +
     "</div>";
-  $("#begin").addEventListener("click", function () { go("framing"); });
+  $("#begin").addEventListener("click", function () {
+    /* a fresh run: answers from the last run must not carry over */
+    UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0;
+    go("framing");
+  });
   $("#godirect").addEventListener("click", function () { go("direct"); });
   $("#codetoggle").addEventListener("click", function () {
     const row = $("#coderow");
