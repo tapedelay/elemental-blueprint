@@ -344,6 +344,20 @@ const CONTENT = {
     rules: 'You are the analyst inside Elemental Blueprint, a secular self-reflection tool that treats the Five Elements strictly as a behavioral pattern language. Task: read the PUBLIC PERSONA of the named person from publicly documented material: interviews, biographies, documented work habits, public conduct over time. If web search is available, use it to confirm or update; otherwise rely on well-established public knowledge. Mapping guide: Wood = drive, expansion, execution, fight response. Fire = expression, connection, charisma, scatter. Earth = nurture, steadiness, community, over-involvement. Metal = structure, standards, precision, withdrawal into correctness. Water = depth, introspection, meaning, disappearance inward. Hard rules: secular behavioral language only; no astrology or destiny words; no medical or diagnostic claims; no speculation about private life; describe patterns, never verdicts; plain punctuation only, never em dashes. Output ONLY a JSON object, no markdown fences, no commentary: {"name":"canonical name","knownFor":"one short line","pct":{"wood":0,"fire":0,"earth":0,"metal":0,"water":0} as integers summing to 100,"primary":"the largest element","secondary":"second largest if at least 18, else null","evidence":[3 to 5 short strings, each tying one element weight to specific documented public behavior],"caveat":"one honest line about the limits of this reading"}. If the person is not publicly known enough to read honestly, return {"error":"unknown"}.'
   },
 
+  compare: {
+    label: "Compare",
+    intro: "Pair this result with one you saved. To compare with someone, take the assessment a second time answering as you believe they would, and give it their name; it lands in your saved results. That result is your read of them, not them.",
+    empty: "No other saved results yet. Retake the assessment answering as the other person, then come back here.",
+    pasteLabel: "Or paste their code",
+    pasteButton: "Pair",
+    pasteBad: "That code did not read. Check it was copied whole.",
+    unnamedSelf: "This result",
+    unnamedOther: "Saved result",
+    withWord: " with ",
+    sideNote: "Each side is scored from that person's own pattern and state, so the two numbers can differ.",
+    footer: "A mirror for reflection, built from answers you gave. Not a verdict on either person or on what happened between you."
+  },
+
   relations: {
     P_GENERATES_U: "They feed you; nourishment without effort.",
     U_GENERATES_P: "You feed them; purpose, with a depletion risk.",
@@ -1711,10 +1725,102 @@ function renderBlueprint() {
         '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p>" +
       "</div>" +
       body +
+      compareSectionHTML() +
       personaSectionHTML() +
       askSectionHTML() +
     "</div>";
+  bindCompare();
   setupCompanion();
+}
+
+/* ---------- compare: pair the active result with a saved one ----------
+   Both directions are scored, each with that side's own state, since
+   both results came from answers the user gave (SPEC section 5). */
+function dyadCardHTML(title, d) {
+  const c = CONTENT.persona;
+  return '<div class="card" style="margin-top:16px">' +
+    '<p class="lbl">' + title + "</p>" +
+    '<p style="margin-top:10px;font-size:15px">' + CONTENT.relations[d.relation] + "</p>" +
+    '<div class="dyadnums">' +
+      '<div class="dn"><span class="micro">' + c.stability + "</span><b>" + d.stab + "</b></div>" +
+      '<div class="dn"><span class="micro">' + c.chemistry + "</span><b>" + d.chem + "</b></div>" +
+      '<div class="dn"><span class="micro">' + c.blend + "</span><b>" + d.score + "</b></div>" +
+    "</div>" +
+    '<span class="statechip">' + CONTENT.tiers[d.tier] + "</span>" +
+    (d.trap ? '<p class="micro" style="margin-top:10px">' + c.trapBadge + "</p>" : "") +
+  "</div>";
+}
+
+function compareOthers() {
+  const mine = encodeBlueprint(UI.scores);
+  return loadProfiles().map(function (p, i) { return { p: p, i: i }; })
+    .filter(function (x) { return x.p.code !== mine; });
+}
+
+function compareSectionHTML() {
+  const c = CONTENT.compare;
+  const others = compareOthers();
+  const list = others.length
+    ? '<div class="footrow" style="margin-top:12px">' + others.slice().reverse().map(function (x) {
+        const s = x.p.scores;
+        return '<button class="linkbtn" data-cmp="' + x.i + '">' +
+          (x.p.name ? esc(x.p.name) + " · " : "") + CONTENT.elements[s.primary].name +
+          (s.secondary ? " + " + CONTENT.elements[s.secondary].name : "") + " · " + esc(x.p.savedAt) + "</button>";
+      }).join("") + "</div>"
+    : '<p class="micro" style="margin-top:10px">' + c.empty + "</p>";
+  return '<div class="section" id="cmpsec"><p class="lbl">' + c.label + "</p>" +
+    '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +
+    '<p class="micro">' + c.intro + "</p>" + list +
+    '<form id="cmpform" style="margin-top:14px"><p class="lbl" style="margin-bottom:8px">' + c.pasteLabel + "</p>" +
+      '<div class="askrow"><input class="askin" id="cmpin" autocomplete="off" spellcheck="false" placeholder="EB1...">' +
+      '<button class="btn sm" type="submit">' + c.pasteButton + "</button></div>" +
+      '<p class="micro" id="cmpbad" hidden style="margin-top:8px">' + c.pasteBad + "</p></form>" +
+    '<div id="cmpbox"></div></div>';
+}
+
+function renderCompare(other, otherName) {
+  const c = CONTENT.compare;
+  const me = UI.profile.name || c.unnamedSelf;
+  const them = otherName || c.unnamedOther;
+  const ab = dyadScore(UI.scores, other);
+  const ba = dyadScore(other, UI.scores);
+  const tag = function (s) {
+    return '<p class="mono" style="font-size:12px;color:var(--ink-70);text-align:center">' +
+      CONTENT.elements[s.primary].name + " " + s.pct[s.primary] + "%" +
+      (s.secondary ? " · " + CONTENT.elements[s.secondary].name + " " + s.pct[s.secondary] + "%" : "") +
+      " · " + CONTENT.states[s.state].name + "</p>";
+  };
+  $("#cmpbox").innerHTML =
+    '<div class="pcard">' +
+      '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px">' +
+        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(me) + "</p>" +
+          pentagonSVG(UI.scores, { size: 200, aria: me + " element chart" }) + tag(UI.scores) + "</div>" +
+        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(them) + "</p>" +
+          pentagonSVG(other, { size: 200, aria: them + " element chart" }) + tag(other) + "</div>" +
+      "</div>" +
+      dyadCardHTML(esc(me) + c.withWord + esc(them), ab) +
+      dyadCardHTML(esc(them) + c.withWord + esc(me), ba) +
+      '<p class="micro" style="margin-top:12px">' + c.sideNote + "</p>" +
+      '<p class="micro" style="margin-top:8px">' + c.footer + "</p>" +
+    "</div>";
+}
+
+function bindCompare() {
+  document.querySelectorAll("[data-cmp]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const p = loadProfiles()[Number(btn.dataset.cmp)];
+      if (!p) return;
+      try { renderCompare(hydrateScores(p.scores), p.name || ""); }
+      catch (e) { /* corrupt entry; ignore */ }
+    });
+  });
+  $("#cmpform").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    const s = decodeBlueprint($("#cmpin").value);
+    if (!s) { $("#cmpbad").hidden = false; return; }
+    $("#cmpbad").hidden = true;
+    renderCompare(s, "");
+  });
 }
 
 /* ---------- ask: follow-up questions via the local companion ----------
@@ -1882,17 +1988,7 @@ function renderPersona() {
       '<ul class="plain" style="margin-top:12px">' +
         r.evidence.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
       (r.caveat ? '<p class="micro" style="margin-top:10px">' + esc(r.caveat) + "</p>" : "") +
-      '<div class="card" style="margin-top:16px">' +
-        '<p class="lbl">' + c.youX + esc(r.name) + "</p>" +
-        '<p style="margin-top:10px;font-size:15px">' + CONTENT.relations[d.relation] + "</p>" +
-        '<div class="dyadnums">' +
-          '<div class="dn"><span class="micro">' + c.stability + "</span><b>" + d.stab + "</b></div>" +
-          '<div class="dn"><span class="micro">' + c.chemistry + "</span><b>" + d.chem + "</b></div>" +
-          '<div class="dn"><span class="micro">' + c.blend + "</span><b>" + d.score + "</b></div>" +
-        "</div>" +
-        '<span class="statechip">' + CONTENT.tiers[d.tier] + "</span>" +
-        (d.trap ? '<p class="micro" style="margin-top:10px">' + c.trapBadge + "</p>" : "") +
-      "</div>" +
+      dyadCardHTML(c.youX + esc(r.name), d) +
       '<p class="micro" style="margin-top:12px">' + c.footer + "</p>" +
     "</div>";
 }
