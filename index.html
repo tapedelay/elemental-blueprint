@@ -132,8 +132,30 @@ input.name:focus{border-color:var(--ink)}
   animation:pop .7s cubic-bezier(.2,.8,.3,1) 1.35s forwards}
 .penta.animate .vlabel{opacity:0;animation:fin .5s ease 1.35s forwards}
 
+/* matches */
+.matchrow{border-bottom:1px solid var(--ink-12)}
+.matchhead{width:100%;display:grid;grid-template-columns:30px 1fr auto;grid-template-areas:"rank name score" "rank tier score";
+  align-items:center;column-gap:12px;row-gap:2px;background:none;border:none;color:var(--ink);text-align:left;padding:12px 0;cursor:pointer}
+.matchhead:hover .mname{text-decoration:underline}
+.mrank{grid-area:rank;font-size:12px;color:var(--ink-55)}
+.mname{grid-area:name;font:700 13px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.mscore{grid-area:score;font-size:24px;font-weight:700}
+.mtier{grid-area:tier;font:500 11px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-55)}
+.matchdetail{padding:4px 0 18px 42px}
+@media(max-width:480px){.matchdetail{padding-left:0}}
+
+/* saved results */
+.savedlist{margin-top:12px;border-top:1px solid var(--ink-12)}
+.savedrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--ink-12)}
+.savedopen{flex:1;text-align:left;border:none;display:flex;flex-direction:column;gap:4px;text-transform:none;letter-spacing:.04em}
+.savedopen b{font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.savedmeta{font-size:11px;color:var(--ink-55)}
+.savedacts{display:flex;gap:12px;flex-shrink:0}
+.savedacts .linkbtn{font-size:10.5px}
+
 /* element crystal + boot: lo-poly software render, scaled up crunchy */
-canvas.crystal{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
+canvas.crystal,canvas.orbit{display:block;margin:0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
+canvas.orbit{width:100%;max-width:560px;aspect-ratio:150/84;height:auto}
 #boot{position:fixed;inset:0;z-index:98;background:var(--paper);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:18px;cursor:pointer}
 #boot.out{animation:fout .24s steps(3) forwards}
@@ -235,7 +257,13 @@ const CONTENT = {
     codeLink: "Paste a blueprint code",
     codeButton: "Load",
     codeBad: "That code did not read. Check it and try again.",
-    savedLabel: "Saved results"
+    savedLabel: "Saved results",
+    readTag: "your read",
+    currentTag: "open",
+    rename: "Rename",
+    remove: "Delete",
+    save: "Save",
+    confirmRemove: "Delete this saved result? This cannot be undone."
   },
 
   direct: {
@@ -264,7 +292,15 @@ const CONTENT = {
     label: "About you",
     title: "Three details first",
     intro: "These shape wording and, later, your matches. They never change how you are typed.",
-    nameLabel: "What should we call you? (optional)",
+    nameLabel: "What should we call you?",
+    subjectPrompt: "Who are you answering for?",
+    subjectOptions: [
+      { value: "self",  label: "Myself" },
+      { value: "other", label: "Someone else" }
+    ],
+    otherNameLabel: "Their name",
+    otherNote: "Answer from what you saw them do, at the time you knew them best. The result is your read of them, saved under their name so you can compare it with yours.",
+    otherButton: "Begin the read",
     agePrompt: "Your age",
     ageBands: [
       { value: "18-26", label: "18-26" },
@@ -337,7 +373,7 @@ const CONTENT = {
     placeholder: "Ask about your pattern, a flow, a practice...",
     button: "Ask",
     thinking: "Thinking...",
-    offline: "Asking needs the local companion. Start the app with launch.bat (it runs server.js), then this section wakes up.",
+    offline: "This needs the local companion: run node server.js in the app folder (launch.bat on Windows) and open the app from localhost:8873.",
     error: "No answer came back. Check that Claude Code is installed and signed in, then try again.",
     rules: "You are the in-app voice of Elemental Blueprint, a secular self-reflection tool that treats the Five Elements (Wood, Fire, Earth, Metal, Water) strictly as a behavioral pattern language: drives, stress responses, repair. Hard rules: no astrology or destiny language, no chakra talk, no medical or diagnostic claims, never pathologize; maturity states (Grounded, Integrating, Reactive) are weather, not identity. Voice: warm, plain, precise, concrete; no emoji; no em dashes. Answer in under 180 words unless asked for more."
   },
@@ -357,6 +393,162 @@ const CONTENT = {
     trapBadge: "High chemistry, high volatility",
     footer: "A reading of the public persona, from public material; not the private person, and not a verdict on anyone.",
     rules: 'You are the analyst inside Elemental Blueprint, a secular self-reflection tool that treats the Five Elements strictly as a behavioral pattern language. Task: read the PUBLIC PERSONA of the named person from publicly documented material: interviews, biographies, documented work habits, public conduct over time. If web search is available, use it to confirm or update; otherwise rely on well-established public knowledge. Mapping guide: Wood = drive, expansion, execution, fight response. Fire = expression, connection, charisma, scatter. Earth = nurture, steadiness, community, over-involvement. Metal = structure, standards, precision, withdrawal into correctness. Water = depth, introspection, meaning, disappearance inward. Hard rules: secular behavioral language only; no astrology or destiny words; no medical or diagnostic claims; no speculation about private life; describe patterns, never verdicts; plain punctuation only, never em dashes. Output ONLY a JSON object, no markdown fences, no commentary: {"name":"canonical name","knownFor":"one short line","pct":{"wood":0,"fire":0,"earth":0,"metal":0,"water":0} as integers summing to 100,"primary":"the largest element","secondary":"second largest if at least 18, else null","evidence":[3 to 5 short strings, each tying one element weight to specific documented public behavior],"caveat":"one honest line about the limits of this reading"}. If the person is not publicly known enough to read honestly, return {"error":"unknown"}.'
+  },
+
+  /* The stress check: five frequency items, one per element's shadow
+     pattern. Phrased as behavior, never naming an element. */
+  lately: {
+    label: "Lately",
+    title: "Over the last month, how often have you:",
+    titleOther: "When you knew them best, how often did they:",
+    intro: "Five quick checks on how pressure has been landing. This is what sets the state: Grounded, Integrating, or Reactive.",
+    scale: ["Rarely", "Sometimes", "Often", "Most days"],
+    items: [
+      { el: "metal", self: "Gone cold, critical, or rigid when things were not done right", other: "Go cold, critical, or rigid when things were not done right" },
+      { el: "fire",  self: "Chased plans, noise, or reassurance until you were worn out", other: "Chase plans, noise, or reassurance until they were worn out" },
+      { el: "water", self: "Withdrawn into your head and gone quiet when something needed saying", other: "Withdraw into their head and go quiet when something needed saying" },
+      { el: "wood",  self: "Snapped at people or forced things that needed patience", other: "Snap at people or force things that needed patience" },
+      { el: "earth", self: "Worried about others or over-helped while your own needs waited", other: "Worry about others or over-help while their own needs waited" }
+    ],
+    button: "See the pattern"
+  },
+
+  observed: {
+    banner: "Your read of {name}. On this page, \"you\" means them.",
+    matchesNote: "Matches belong to your own result. Open yours from Saved results to see them."
+  },
+
+  /* Pairing report. Relation keys are partner P against you U. */
+  report: {
+    label: "The pairing, read closely",
+    strengthsLabel: "What works",
+    frictionsLabel: "Where it grinds",
+    needsLabel: "What each needs",
+    repairLabel: "Repair scripts",
+    repairIntro: "For the moment the stress reflex fires. Said early, in your own words.",
+    needsLine: "For {name}: {need}",
+    stressSame: "Under load you both {a}. Nobody is left to balance it, so agree in advance who breaks the pattern first.",
+    stressPair: "Under load, {A} {a} while {B} {b}. Whoever notices first names it out loud.",
+    stressVerb: {
+      wood: "pushes harder and gets louder",
+      fire: "reaches for people and noise",
+      earth: "over-tends and worries",
+      metal: "goes cold and correct",
+      water: "goes quiet and inward"
+    },
+    stressVerbPlural: {
+      wood: "push harder and get louder",
+      fire: "reach for people and noise",
+      earth: "over-tend and worry",
+      metal: "go cold and correct",
+      water: "go quiet and inward"
+    },
+    needs: {
+      wood: "room to act, and a clear yes or no",
+      fire: "warmth returned, out loud",
+      earth: "to be let in, and cared for back",
+      metal: "respect for the standard, and space to get it right",
+      water: "time to surface, without being chased"
+    },
+    repair: {
+      wood: "I am pushing because I feel stuck, not because of you. Give me ten minutes to move, then let us pick one next step together.",
+      fire: "I am getting loud and busy because I feel far from you. Can we have ten quiet minutes, just us?",
+      earth: "I am over-helping because I am worried. Tell me what you actually need, and I will do only that.",
+      metal: "I went cold and correct. The standard can wait; I want to hear what happened for you first.",
+      water: "I went quiet. I am not gone. Give me an hour and I will come back with one honest sentence."
+    },
+    byRelation: {
+      P_GENERATES_U: {
+        strengths: [
+          "Their natural way of moving fuels yours; being around them makes your own pattern easier to run.",
+          "You tend to feel resourced rather than managed. Support arrives without being negotiated.",
+          "The ordinary day together leaves you with more than you started with."
+        ],
+        frictions: [
+          "Their giving is so natural it can stop being seen, and then stop being returned.",
+          "Comfort can soften the edge you need; nourishment with no challenge slides into drift."
+        ]
+      },
+      U_GENERATES_P: {
+        strengths: [
+          "Your pattern fuels theirs; you get to watch them grow because of what you bring.",
+          "Purpose: you know what you are for here, and giving it feels good.",
+          "They feel met around you, which buys a lot of goodwill on hard days."
+        ],
+        frictions: [
+          "You can give past your own reserves and only notice when you are empty.",
+          "If the flow only runs one way, generosity on your side quietly turns into scorekeeping."
+        ]
+      },
+      SAME: {
+        strengths: [
+          "Instant recognition: you do not have to translate yourself.",
+          "Shared priorities make the ordinary days easy to agree on.",
+          "You understand each other's gifts from the inside, so they get used well."
+        ],
+        frictions: [
+          "Doubled blind spots: whatever this pattern cannot see, neither of you can.",
+          "Under stress you both reach for the same reflex at the same moment."
+        ]
+      },
+      U_CONTROLS_P: {
+        strengths: [
+          "You bring the shape and limits their pattern lacks; at best, that is generous pruning.",
+          "Real chemistry: the tension between your styles keeps things alive.",
+          "They can grow faster next to you than alone, if they choose to."
+        ],
+        frictions: [
+          "What feels like help to you can land as correction to them.",
+          "They may shrink to fit you, and resentment builds where you cannot see it."
+        ]
+      },
+      P_CONTROLS_U: {
+        strengths: [
+          "A magnetic pull: they reach parts of you no one else does.",
+          "Their pattern checks your excess, which sharpens you while it stays kind.",
+          "High chemistry; it rarely feels flat."
+        ],
+        frictions: [
+          "The classic trap: the pull is strongest exactly where the friction is.",
+          "Over time you may feel managed or diminished, and fight or fold instead of saying so."
+        ]
+      }
+    }
+  },
+
+  /* The cycle chart: arrows drawn between both people's elements */
+  cycles: {
+    label: "How your elements move each other",
+    feeds: "{a}'s {ea} feeds {b}'s {eb}",
+    checks: "{a}'s {ea} checks {b}'s {eb}",
+    same: "{a} and {b} share {e}",
+    legend: "Solid arrow: feeds. Dashed arrow: checks. Bright lines join primaries; faint lines involve a secondary. Solid outline: {a}. Dashed outline: {b}.",
+    orbitAria: "Two element crystals orbiting each other"
+  },
+
+  matches: {
+    label: "Matches",
+    intro: "All 25 partner patterns, scored against yours. Tap one to read the pairing.",
+    pull: "The Pull",
+    hold: "The Hold",
+    pullGloss: "Ranked by your current state: what you are likely drawn to right now.",
+    holdGloss: "The same 25, ranked as if you were Grounded: what tends to last.",
+    groundedNote: "You are Grounded, so pull and hold mostly agree. Under real stress, your top pull would be {combo}.",
+    gapNote: "Where the two lists disagree is the growth content of this whole app.",
+    top: "Top 5",
+    bottom: "Bottom 5",
+    all: "All 25",
+    showAll: "Show all 25",
+    showLess: "Show top and bottom 5",
+    pure: "Pure",
+    partner: "a {combo} partner"
+  },
+
+  image: {
+    button: "Save image",
+    pairButton: "Save pairing image",
+    saved: "Image saved",
+    footer: "elemental blueprint · a self-reflection tool"
   },
 
   compare: {
@@ -582,77 +774,79 @@ const CONTENT = {
     }
   },
 
-  /* Seed question bank v1. Option keys: el = element, val = M (mature) | S (shadow) | N (neutral). */
+  /* Seed question bank v1. Option keys: el = element, val = M (mature) | S (shadow) | N (neutral).
+     `other` / `o` are the observer wording, used when answering about someone else:
+     same keys, same scoring, phrased as things you could see them do. */
   questions: [
-    { id: 1, text: "A completely free Saturday appears, zero obligations. Your honest first move:", options: [
-      { el: "wood",  val: "M", text: "Start the project I have been itching to launch" },
-      { el: "fire",  val: "M", text: "Text a few people; something fun will assemble itself" },
-      { el: "earth", val: "M", text: "Slow morning, cook something real, tend the house" },
-      { el: "metal", val: "M", text: "Finally sort the thing that has been quietly bothering me" },
-      { el: "water", val: "M", text: "Long walk alone with a notebook and no destination" }
+    { id: 1, text: "A completely free Saturday appears, zero obligations. Your honest first move:", other: "A completely free Saturday opens up for them. Their usual first move:", options: [
+      { el: "wood",  val: "M", text: "Start the project I have been itching to launch", o: "Start a project they had been itching to launch" },
+      { el: "fire",  val: "M", text: "Text a few people; something fun will assemble itself", o: "Round up people; something fun assembles itself" },
+      { el: "earth", val: "M", text: "Slow morning, cook something real, tend the house", o: "Slow morning, cook something real, tend the home" },
+      { el: "metal", val: "M", text: "Finally sort the thing that has been quietly bothering me", o: "Sort out the thing that had been quietly bothering them" },
+      { el: "water", val: "M", text: "Long walk alone with a notebook and no destination", o: "Disappear on a long walk or into a book, alone" }
     ]},
-    { id: 2, text: "Someone close to you is upset with you and goes quiet. Before you can edit yourself, you:", options: [
-      { el: "wood",  val: "S", text: "Push to resolve it right now; the silence feels like a wall to break" },
-      { el: "fire",  val: "S", text: "Fill the air with warmth, jokes, affection, anything" },
-      { el: "earth", val: "S", text: "Start doing things for them and checking in, repeatedly" },
-      { el: "metal", val: "S", text: "Retreat into being technically correct" },
-      { el: "water", val: "S", text: "Go still and quietly build a theory of what this really means" }
+    { id: 2, text: "Someone close to you is upset with you and goes quiet. Before you can edit yourself, you:", other: "Someone close to them is upset with them and goes quiet. Their first reaction:", options: [
+      { el: "wood",  val: "S", text: "Push to resolve it right now; the silence feels like a wall to break", o: "Push to resolve it right now" },
+      { el: "fire",  val: "S", text: "Fill the air with warmth, jokes, affection, anything", o: "Fill the air with warmth, jokes, affection" },
+      { el: "earth", val: "S", text: "Start doing things for them and checking in, repeatedly", o: "Start doing things for the person and checking in, repeatedly" },
+      { el: "metal", val: "S", text: "Retreat into being technically correct", o: "Retreat into being technically correct" },
+      { el: "water", val: "S", text: "Go still and quietly build a theory of what this really means", o: "Go still and distant, clearly working it out alone" }
     ]},
-    { id: 3, text: "What quietly offends you most in other people:", options: [
-      { el: "wood",  val: "N", text: "Passivity; people who will not act" },
-      { el: "fire",  val: "N", text: "Coldness; people who will not play or feel" },
-      { el: "earth", val: "N", text: "Selfishness; people who will not show up for their own" },
-      { el: "metal", val: "N", text: "Sloppiness; people who do not care about doing it right" },
-      { el: "water", val: "N", text: "Shallowness; people who will not go beneath the surface" }
+    { id: 3, text: "What quietly offends you most in other people:", other: "What visibly bothered them most in other people:", options: [
+      { el: "wood",  val: "N", text: "Passivity; people who will not act", o: "Passivity; people who will not act" },
+      { el: "fire",  val: "N", text: "Coldness; people who will not play or feel", o: "Coldness; people who will not play or feel" },
+      { el: "earth", val: "N", text: "Selfishness; people who will not show up for their own", o: "Selfishness; people who do not show up for their own" },
+      { el: "metal", val: "N", text: "Sloppiness; people who do not care about doing it right", o: "Sloppiness; people who do not do it right" },
+      { el: "water", val: "N", text: "Shallowness; people who will not go beneath the surface", o: "Shallowness; people who stay on the surface" }
     ]},
-    { id: 4, text: "A project you care about takes a real hit. The best version of your first 24 hours:", options: [
-      { el: "wood",  val: "M", text: "Attack it from a new angle; motion is medicine" },
-      { el: "fire",  val: "M", text: "Talk it through with someone until it gets lighter" },
-      { el: "earth", val: "M", text: "Steady the basics first: sleep, food, people, then reassess" },
-      { el: "metal", val: "M", text: "Audit the failure, rewrite the standard, cut what broke" },
-      { el: "water", val: "M", text: "Step back far enough to ask whether the goal was even right" }
+    { id: 4, text: "A project you care about takes a real hit. The best version of your first 24 hours:", other: "Something they cared about took a real hit. At their best, they:", options: [
+      { el: "wood",  val: "M", text: "Attack it from a new angle; motion is medicine", o: "Attacked it from a new angle and kept moving" },
+      { el: "fire",  val: "M", text: "Talk it through with someone until it gets lighter", o: "Talked it through with people until it felt lighter" },
+      { el: "earth", val: "M", text: "Steady the basics first: sleep, food, people, then reassess", o: "Steadied the basics first: sleep, food, people" },
+      { el: "metal", val: "M", text: "Audit the failure, rewrite the standard, cut what broke", o: "Audited what failed and tightened the standard" },
+      { el: "water", val: "M", text: "Step back far enough to ask whether the goal was even right", o: "Stepped back to ask whether the goal was even right" }
     ]},
-    { id: 5, text: "Same hit, worst version of you:", options: [
-      { el: "wood",  val: "S", text: "Bulldoze ahead angry and break something that was working" },
-      { el: "fire",  val: "S", text: "Spin up noise and distraction until I am exhausted" },
-      { el: "earth", val: "S", text: "Freeze in worry and manage everyone else's reactions instead" },
-      { el: "metal", val: "S", text: "Go cold, perfectionistic, privately contemptuous" },
-      { el: "water", val: "S", text: "Disappear into my head for days and call it processing" }
+    { id: 5, text: "Same hit, worst version of you:", other: "Same kind of hit, at their worst:", options: [
+      { el: "wood",  val: "S", text: "Bulldoze ahead angry and break something that was working", o: "Bulldozed ahead angry and broke something that was working" },
+      { el: "fire",  val: "S", text: "Spin up noise and distraction until I am exhausted", o: "Spun up noise and distraction until they burned out" },
+      { el: "earth", val: "S", text: "Freeze in worry and manage everyone else's reactions instead", o: "Froze in worry and managed everyone else's reactions" },
+      { el: "metal", val: "S", text: "Go cold, perfectionistic, privately contemptuous", o: "Went cold, perfectionistic, quietly contemptuous" },
+      { el: "water", val: "S", text: "Disappear into my head for days and call it processing", o: "Vanished into their head for days" }
     ]},
-    { id: 6, text: "A group you are part of is stuck and circling. You naturally become:", options: [
-      { el: "wood",  val: "M", text: "The one who forces a decision" },
-      { el: "fire",  val: "M", text: "The one who revives the room" },
-      { el: "earth", val: "M", text: "The one who checks that everyone is actually okay" },
-      { el: "metal", val: "M", text: "The one who structures the mess into steps" },
-      { el: "water", val: "M", text: "The one who names the deeper thing nobody said" }
+    { id: 6, text: "A group you are part of is stuck and circling. You naturally become:", other: "In a group that was stuck, they naturally became:", options: [
+      { el: "wood",  val: "M", text: "The one who forces a decision", o: "The one who forced a decision" },
+      { el: "fire",  val: "M", text: "The one who revives the room", o: "The one who revived the room" },
+      { el: "earth", val: "M", text: "The one who checks that everyone is actually okay", o: "The one who checked that everyone was actually okay" },
+      { el: "metal", val: "M", text: "The one who structures the mess into steps", o: "The one who structured the mess into steps" },
+      { el: "water", val: "M", text: "The one who names the deeper thing nobody said", o: "The one who named the deeper thing nobody said" }
     ]},
-    { id: 7, text: "Your honest relationship to rules:", options: [
-      { el: "wood",  val: "S", text: "Speed limits; I break the dumb ones without guilt" },
-      { el: "fire",  val: "S", text: "Mood-killers; I would rather charm my way around them" },
-      { el: "earth", val: "M", text: "How we keep each other safe; I uphold the caring ones" },
-      { el: "metal", val: "M", text: "Mostly written for reasons people never bothered to learn" },
-      { el: "water", val: "S", text: "I comply on the surface and keep my real opinion submerged" }
+    { id: 7, text: "Your honest relationship to rules:", other: "Their relationship to rules, as you saw it:", options: [
+      { el: "wood",  val: "S", text: "Speed limits; I break the dumb ones without guilt", o: "Broke the dumb ones without guilt" },
+      { el: "fire",  val: "S", text: "Mood-killers; I would rather charm my way around them", o: "Charmed their way around them" },
+      { el: "earth", val: "M", text: "How we keep each other safe; I uphold the caring ones", o: "Upheld the ones that kept people safe" },
+      { el: "metal", val: "M", text: "Mostly written for reasons people never bothered to learn", o: "Respected the ones with good reasons, and knew the reasons" },
+      { el: "water", val: "S", text: "I comply on the surface and keep my real opinion submerged", o: "Complied on the surface, kept their real opinion private" }
     ]},
-    { id: 8, text: "What rest looks like when you actually let yourself have it:", options: [
-      { el: "wood",  val: "N", text: "A different kind of doing; stillness is not rest to me" },
-      { el: "fire",  val: "M", text: "A full table, laughter, people I love" },
-      { el: "earth", val: "S", text: "Hard to take until everyone else is settled first" },
-      { el: "metal", val: "S", text: "Impossible inside chaos; order first, then I can stop" },
-      { el: "water", val: "M", text: "Silence, one idea, nobody talking" }
+    { id: 8, text: "What rest looks like when you actually let yourself have it:", other: "When they actually rested, it looked like:", options: [
+      { el: "wood",  val: "N", text: "A different kind of doing; stillness is not rest to me", o: "A different kind of doing; they rarely sat still" },
+      { el: "fire",  val: "M", text: "A full table, laughter, people I love", o: "A full table, laughter, people around" },
+      { el: "earth", val: "S", text: "Hard to take until everyone else is settled first", o: "Hard to come by until everyone else was settled" },
+      { el: "metal", val: "S", text: "Impossible inside chaos; order first, then I can stop", o: "Impossible inside a mess; order first, then they could stop" },
+      { el: "water", val: "M", text: "Silence, one idea, nobody talking", o: "Silence, one idea, nobody talking" }
     ]},
-    { id: 9, text: "Someone you love is struggling. Your first instinct:", options: [
-      { el: "wood",  val: "M", text: "Remove the obstacle for them; act on their behalf" },
-      { el: "fire",  val: "M", text: "Lift them; energize, encourage, make them laugh again" },
-      { el: "earth", val: "M", text: "Hold them; presence, food, time, no agenda" },
-      { el: "metal", val: "M", text: "Solve it; find the real problem and hand them the correct plan" },
-      { el: "water", val: "M", text: "Understand it; ask the one question that reframes everything" }
+    { id: 9, text: "Someone you love is struggling. Your first instinct:", other: "When someone they loved was struggling, they:", options: [
+      { el: "wood",  val: "M", text: "Remove the obstacle for them; act on their behalf", o: "Removed the obstacle; acted on the person's behalf" },
+      { el: "fire",  val: "M", text: "Lift them; energize, encourage, make them laugh again", o: "Lifted them; energized, encouraged, made them laugh" },
+      { el: "earth", val: "M", text: "Hold them; presence, food, time, no agenda", o: "Held them; presence, food, time" },
+      { el: "metal", val: "M", text: "Solve it; find the real problem and hand them the correct plan", o: "Solved it; found the real problem and offered a plan" },
+      { el: "water", val: "M", text: "Understand it; ask the one question that reframes everything", o: "Asked the one question that reframed it" }
     ]},
-    { id: 10, text: "The fear you would least like to admit out loud:", options: [
-      { el: "wood",  val: "N", text: "Being trapped, stalled, made to wait forever" },
-      { el: "fire",  val: "N", text: "Being unloved, unfelt, left outside the warmth" },
-      { el: "earth", val: "N", text: "Being needed by no one, or failing the people I hold" },
-      { el: "metal", val: "N", text: "Being exposed as flawed under real scrutiny" },
-      { el: "water", val: "N", text: "Being fully seen and then drained, or finding out none of it meant anything" }
+    { id: 10, text: "The fear you would least like to admit out loud:", other: "What seemed to rattle them most, underneath:", options: [
+      { el: "wood",  val: "N", text: "Being trapped, stalled, made to wait forever", o: "Being stuck, blocked, or made to wait" },
+      { el: "fire",  val: "N", text: "Being unloved, unfelt, left outside the warmth", o: "Being left out of the warmth, or unloved" },
+      { el: "earth", val: "N", text: "Being needed by no one, or failing the people I hold", o: "Not being needed, or failing the people they held" },
+      { el: "metal", val: "N", text: "Being exposed as flawed under real scrutiny", o: "Being exposed as flawed or getting it wrong" },
+      { el: "water", val: "N", text: "Being fully seen and then drained, or finding out none of it meant anything", o: "Being seen too fully, or finding out it meant nothing" }
     ]}
   ]
 };
@@ -699,8 +893,27 @@ function roundPcts(pctF) {
   return out;
 }
 
-/* answers: [{ q, pick, also? }] with valences derived from CONTENT. */
-function scoreAnswers(answers) {
+/* Reactivity from the stress check: 0 (rarely) .. 1 (most days).
+   Weighted toward the user's own strong elements, since their shadow
+   patterns are the ones that run the show, with an unweighted floor. */
+function reactivityOf(lately, pctF) {
+  if (!lately) return null;
+  let weighted = 0, mean = 0;
+  for (let i = 0; i < ELS.length; i++) {
+    const v = Number(lately[ELS[i]]);
+    if (!(v >= 0 && v <= 3)) return null; /* incomplete check: ignore it */
+    weighted += (pctF[ELS[i]] || 0) * v / 3;
+    mean += v / 3 / ELS.length;
+  }
+  return 0.6 * weighted + 0.4 * mean;
+}
+
+/* answers: [{ q, pick, also? }] with valences derived from CONTENT.
+   lately (optional): { element: 0..3 } from the stress check. With it,
+   overall = half answer-valence maturity, half (1 - reactivity); the
+   bank alone barely moves state (most questions share one valence
+   across all five options), so the check is what makes state real. */
+function scoreAnswers(answers, lately) {
   const pts = {}, mHits = {}, sHits = {};
   ELS.forEach(function (e) { pts[e] = 0; mHits[e] = 0; sHits[e] = 0; });
   let total = 0;
@@ -742,7 +955,9 @@ function scoreAnswers(answers) {
       den += pctF[e];
     }
   });
-  const overallF = den > 0 ? num / den : 0.5;
+  const valenceF = den > 0 ? num / den : 0.5;
+  const react = reactivityOf(lately, pctF);
+  const overallF = react == null ? valenceF : 0.5 * valenceF + 0.5 * (1 - react);
   const state = overallF >= THRESH.grounded ? "grounded"
               : overallF <= THRESH.reactive ? "reactive"
               : "integrating";
@@ -882,12 +1097,98 @@ function dyadScore(user, person) {
   const relation = relationOf(p1, user.primary);
   return {
     relation: relation,
+    raw: raw,
     stab: Math.round(stab),
     chem: Math.round(chem),
     score: Math.round(raw),
-    tier: raw >= 85 ? "cobuilder" : raw >= 70 ? "growth" : raw >= 55 ? "workable" : raw >= 40 ? "effortful" : "volatile",
+    tier: tierOf(raw),
     trap: relation === "P_CONTROLS_U" && user.state === "reactive"
   };
+}
+
+function tierOf(raw) {
+  return raw >= 85 ? "cobuilder" : raw >= 70 ? "growth" : raw >= 55 ? "workable" : raw >= 40 ? "effortful" : "volatile";
+}
+
+/* Ranked matching (SPEC section 4): one hypothetical partner combo,
+   optionally scored under another state (the Hold uses Grounded), with
+   the age-band and polarity modifiers that a specific-person read
+   deliberately omits. */
+function comboScore(user, p1, p2, profile, stateOverride) {
+  const st = stateOverride || user.state;
+  const u = Object.assign({}, user, { state: st });
+  const d = dyadScore(u, { primary: p1, secondary: p1 === p2 ? null : p2 });
+  let raw = d.raw;
+  const pr = profile || {};
+  const young = pr.ageBand === "18-26" || pr.ageBand === "27-33";
+  if (young && (p1 === "wood" || p1 === "fire")) raw *= 1.08;
+  if (pr.ageBand === "38+" && (p1 === "earth" || p1 === "metal")) raw *= 1.08;
+  if (pr.polarity === "direction") raw *= p1 === "metal" ? 1.10 : p1 === "wood" ? 1.05 : 1;
+  if (pr.polarity === "flow") raw *= (p1 === "earth" || p1 === "water") ? 1.10 : p1 === "fire" ? 1.05 : 1;
+  raw = Math.max(0, Math.min(100, raw));
+  return {
+    p1: p1, p2: p2, relation: d.relation, stab: d.stab, chem: d.chem,
+    raw: raw, score: Math.round(raw), tier: tierOf(raw),
+    trap: d.relation === "P_CONTROLS_U" && st === "reactive"
+  };
+}
+
+/* All 25 combos, best first. pull = the user's actual state, hold = Grounded. */
+function rankMatches(user, profile) {
+  function ranked(st) {
+    const out = [];
+    ELS.forEach(function (p1) { ELS.forEach(function (p2) { out.push(comboScore(user, p1, p2, profile, st)); }); });
+    return out.sort(function (a, b) {
+      return b.raw - a.raw || ELS.indexOf(a.p1) - ELS.indexOf(b.p1) || ELS.indexOf(a.p2) - ELS.indexOf(b.p2);
+    });
+  }
+  return { pull: ranked(user.state), hold: ranked("grounded") };
+}
+
+function fill(tpl, vars) {
+  return String(tpl).replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; });
+}
+
+/* The written pairing report: you and them are scores objects (only
+   primary is read), names are display strings. Pure: returns strings. */
+function pairingReport(you, them, youName, themName) {
+  const R = CONTENT.report;
+  const rel = relationOf(them.primary, you.primary);
+  const byRel = R.byRelation[rel];
+  const en = function (e) { return CONTENT.elements[e].name; };
+  const stress = you.primary === them.primary
+    ? fill(R.stressSame, { a: R.stressVerbPlural[you.primary] })
+    : fill(R.stressPair, { A: youName, a: R.stressVerb[you.primary], B: themName, b: R.stressVerb[them.primary] });
+  return {
+    relation: rel,
+    strengths: byRel.strengths.slice(),
+    frictions: byRel.frictions.concat([stress]),
+    needs: [
+      fill(R.needsLine, { name: youName + " (" + en(you.primary) + ")", need: R.needs[you.primary] }),
+      fill(R.needsLine, { name: themName + " (" + en(them.primary) + ")", need: R.needs[them.primary] })
+    ],
+    repair: [
+      { who: youName, el: you.primary, text: R.repair[you.primary] },
+      { who: themName, el: them.primary, text: R.repair[them.primary] }
+    ]
+  };
+}
+
+/* Cycle edges between two people's elements: primaries always, plus
+   each secondary against the other's primary. Directed by Sheng (feeds)
+   or Ke (checks); a shared element is "same". */
+function cycleEdges(a, b) {
+  const pairs = [[a.primary, b.primary, true]];
+  if (b.secondary) pairs.push([a.primary, b.secondary, false]);
+  if (a.secondary) pairs.push([a.secondary, b.primary, false]);
+  return pairs.map(function (pr) {
+    const x = pr[0], y = pr[1];
+    if (x === y) return { kind: "same", from: "a", fe: x, to: "b", te: y, major: pr[2] };
+    if (GEN[x] === y) return { kind: "feeds", from: "a", fe: x, to: "b", te: y, major: pr[2] };
+    if (GEN[y] === x) return { kind: "feeds", from: "b", fe: y, to: "a", te: x, major: pr[2] };
+    if (KE[x] === y) return { kind: "checks", from: "a", fe: x, to: "b", te: y, major: pr[2] };
+    return { kind: "checks", from: "b", fe: y, to: "a", te: x, major: pr[2] };
+  });
 }
 
 /* Parse a persona reading returned by the companion: tolerate prose
@@ -1074,7 +1375,44 @@ function runFixtures() {
   console.log((rtOk ? "PASS" : "FAIL") + " :: blueprint code roundtrips and rejects malformed codes");
   if (rtOk) pass++;
 
-  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 3;
+  /* stress check: hand-computed from the all-fire answers (valence .625) */
+  const fireAns = FIXTURES[0].answers;
+  const zero = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+  const calm = scoreAnswers(fireAns, zero);
+  const hot = scoreAnswers(fireAns, { wood: 3, fire: 3, earth: 3, metal: 3, water: 3 });
+  const mid = scoreAnswers(fireAns, Object.assign({}, zero, { fire: 2 }));
+  const half = scoreAnswers(fireAns, { fire: 2 }); /* incomplete check is ignored */
+  const laOk = calm.state === "grounded" && Math.abs(calm.maturity.overallF - 0.8125) < 0.005 &&
+    hot.state === "reactive" && Math.abs(hot.maturity.overallF - 0.3125) < 0.005 &&
+    mid.state === "integrating" && Math.abs(mid.maturity.overallF - 0.5858) < 0.005 &&
+    Math.abs(half.maturity.overallF - 0.625) < 0.005;
+  console.assert(laOk, "LATELY FAIL", { calm: calm, hot: hot, mid: mid, half: half });
+  console.log((laOk ? "PASS" : "FAIL") + " :: stress check moves state: calm .8125 grounded, hot .3125 reactive, fire-only .586 integrating");
+  if (laOk) pass++;
+
+  /* ranked combos: all-fire grounded user. Pure wood feeds fire:
+     .75*95+.25*60 = 86.25, x1.08 age 27-33 = 93.15 -> 93 cobuilder.
+     Pure water checks fire, scored reactive: .3*30+.7*95 = 75.5 -> 76
+     growth, trap on; 38+ and direction leave water unmodified. */
+  const fu = scoreAnswers(fireAns);
+  const c1 = comboScore(fu, "wood", "wood", { ageBand: "27-33", polarity: "flow" });
+  const c2 = comboScore(fu, "water", "water", { ageBand: "38+", polarity: "direction" }, "reactive");
+  const rk = rankMatches(fu, { ageBand: "27-33", polarity: "flow" });
+  const cOk = c1.score === 93 && c1.tier === "cobuilder" && !c1.trap &&
+    c2.score === 76 && c2.tier === "growth" && c2.trap &&
+    rk.pull.length === 25 && rk.hold.length === 25 && rk.hold[0].p1 === "wood";
+  console.assert(cOk, "COMBO FAIL", { c1: c1, c2: c2, top: rk.hold[0] });
+  console.log((cOk ? "PASS" : "FAIL") + " :: ranked combos apply blend, age and polarity modifiers, trap badge");
+  if (cOk) pass++;
+
+  const ed = cycleEdges({ primary: "water", secondary: "wood" }, { primary: "fire", secondary: null });
+  const edOk = ed.length === 2 && ed[0].kind === "checks" && ed[0].from === "a" && ed[0].fe === "water" &&
+    ed[1].kind === "feeds" && ed[1].from === "a" && ed[1].fe === "wood" && !ed[1].major;
+  console.assert(edOk, "EDGES FAIL", ed);
+  console.log((edOk ? "PASS" : "FAIL") + " :: cycle edges: water checks fire, wood feeds fire");
+  if (edOk) pass++;
+
+  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 6;
   console.log(pass + "/" + totalFix + " fixtures passed");
   console.groupEnd();
   return pass === totalFix;
@@ -1089,7 +1427,9 @@ const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const UI = {
   screen: "landing",
   qIndex: 0,
-  profile: { name: "", ageBand: null, seeking: null, polarity: null },
+  profile: { name: "", ageBand: null, seeking: null, polarity: null, subject: "self" },
+  observed: false,  /* the active result is the user's read of someone else */
+  lately: {},       /* stress check: element -> 0..3 */
   picks: {},        /* qid -> element */
   alsos: {},        /* qid -> element */
   optionOrder: {},  /* qid -> shuffled element order, fixed per session */
@@ -1118,6 +1458,8 @@ function saveAll() {
   const payload = {
     profile: UI.profile,
     answers: answerArray(),
+    lately: UI.lately,
+    observed: !!UI.observed,
     scores: publicScores(UI.scores),
     results: { ranked: [], computedAt: "" },
     meta: { version: 1 }
@@ -1172,6 +1514,7 @@ function stashCurrent() {
   if (list.some(function (p) { return p.code === code; })) return false;
   list.push({
     name: UI.profile.name || "",
+    observed: !!UI.observed,
     code: code,
     scores: publicScores(UI.scores),
     savedAt: new Date().toISOString().slice(0, 10)
@@ -1180,12 +1523,14 @@ function stashCurrent() {
   return true;
 }
 /* Make a scores object the active result (direct entry, code, profile). */
-function adoptScores(scores, name) {
+function adoptScores(scores, name, observed) {
   const kept = stashCurrent();
   UI.scores = scores;
+  UI.observed = !!observed;
   if (typeof name === "string") UI.profile.name = name; /* "" clears it */
   UI._persona = null; /* any dyad belonged to the previous result */
   saveAll();
+  stashCurrent(); /* every active result is listed, so it can be renamed or compared */
   go("blueprint");
   if (kept) toast(CONTENT.footer.stashToast);
 }
@@ -1341,30 +1686,28 @@ function elementRGB() {
   return crystalRGB;
 }
 
+/* Equator reach per element, in crystal vertex order; neutral without scores */
+function crystalRadii(scores) {
+  const order = ["fire", "earth", "metal", "water", "wood"];
+  if (!scores || !scores.pct) return order.map(function () { return 1; });
+  const mx = Math.max.apply(null, order.map(function (e) { return scores.pct[e] || 0; })) || 1;
+  return order.map(function (e) { return round2(0.42 + 1.05 * (scores.pct[e] || 0) / mx); });
+}
+
 function crystalHTML(scores, opts) {
   opts = opts || {};
   const size = opts.size || 160;
   const res = opts.res || Math.round(size / 2.6);
-  const VORDER = ["fire", "earth", "metal", "water", "wood"];
-  let radii = VORDER.map(function () { return 1; });
-  if (scores && scores.pct) {
-    const mx = Math.max.apply(null, VORDER.map(function (e) { return scores.pct[e] || 0; })) || 1;
-    radii = VORDER.map(function (e) { return 0.42 + 1.05 * (scores.pct[e] || 0) / mx; });
-  }
+  const radii = crystalRadii(scores);
   return '<canvas class="crystal" width="' + res + '" height="' + res + '" data-r="' + radii.join(",") +
     '" data-dir="' + (opts.dir || 1) + '" style="width:' + size + "px;height:" + size + 'px" role="img" aria-label="' +
     esc(opts.aria || "Element crystal") + '"></canvas>';
 }
 
-function drawCrystal(cv, t, scale) {
-  const ctx = cv.getContext("2d");
-  const N = cv.width;
-  const radii = cv.dataset.r.split(",").map(Number);
-  const dir = Number(cv.dataset.dir) || 1;
-  const RGB = elementRGB();
-  const VORDER = ["fire", "earth", "metal", "water", "wood"];
-  const s = scale == null ? 1 : scale;
-  /* model space: equator ring + two apexes */
+const CRYSTAL_ORDER = ["fire", "earth", "metal", "water", "wood"];
+
+/* View-space vertices for one crystal: rotation, then a translation. */
+function crystalVerts(radii, t, dir, s, off) {
   const V = [];
   for (let i = 0; i < 5; i++) {
     const a = (-90 + i * 72) * Math.PI / 180;
@@ -1374,92 +1717,163 @@ function drawCrystal(cv, t, scale) {
   V.push([0, -1.05 * s, 0]); /* 6: pavilion */
   const ry = t * 0.55 * dir, rx = 0.38 + Math.sin(t * 0.7) * 0.06;
   const cy = Math.cos(ry), sy = Math.sin(ry), cx = Math.cos(rx), sx = Math.sin(rx);
-  const D = 4.6, F = N * 1.65;
-  const W = V.map(function (v) {
+  const o = off || [0, 0, 0];
+  return V.map(function (v) {
     const x1 = v[0] * cy + v[2] * sy, z1 = -v[0] * sy + v[2] * cy;
     const y2 = v[1] * cx - z1 * sx, z2 = v[1] * sx + z1 * cx;
-    return [x1, y2, z2];
+    return [x1 + o[0], y2 + o[1], z2 + o[2]];
   });
+}
+
+/* Rasterize one crystal into a shared frame {px, zb, w, h, F, D}.
+   Returns the integer-snapped screen points (index 0..4 = elements). */
+function rasterCrystal(fr, W) {
+  const RGB = elementRGB();
+  const w = fr.w, h = fr.h, px = fr.px, zb = fr.zb, D = fr.D, F = fr.F;
   /* integer snap: no subpixel precision, the period-correct wobble */
-  const P = W.map(function (w) {
-    const k = F / (w[2] + D);
-    return [Math.round(N / 2 + w[0] * k), Math.round(N / 2 - w[1] * k + N * 0.02), w[2]];
+  const P = W.map(function (v) {
+    const k = F / (v[2] + D);
+    return [Math.round(w / 2 + v[0] * k), Math.round(h / 2 - v[1] * k + h * 0.02), v[2]];
   });
-  const faces = [];
-  for (let i = 0; i < 5; i++) {
-    const j = (i + 1) % 5;
-    faces.push([5, i, j, i, j]);
-    faces.push([6, j, i, i, j]);
-  }
-  const img = ctx.createImageData(N, N);
-  const px = img.data;
-  const zb = new Float32Array(N * N).fill(1e9);
   const L = [-0.45, 0.7, -0.55];
   const ln = Math.hypot(L[0], L[1], L[2]);
-  faces.forEach(function (f) {
-    const a = W[f[0]], b = W[f[1]], c = W[f[2]];
-    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-    let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-    const nl = Math.hypot(n[0], n[1], n[2]) || 1;
-    n = [n[0] / nl, n[1] / nl, n[2] / nl];
-    /* face the camera (it looks down +z): flip rather than trust winding */
-    const ctr = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 + D];
-    if (n[0] * ctr[0] + n[1] * ctr[1] + n[2] * ctr[2] > 0) n = [-n[0], -n[1], -n[2]];
-    const lit = 0.26 + 0.9 * Math.max(0, (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / ln);
-    const ca = RGB[VORDER[f[3]]], cb = RGB[VORDER[f[4]]];
-    const col = [0, 1, 2].map(function (k) { return Math.min(255, (ca[k] + cb[k]) / 2 * lit); });
-    const p0 = P[f[0]], p1 = P[f[1]], p2 = P[f[2]];
-    const area = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
-    if (area === 0) return;
-    const minX = Math.max(0, Math.min(p0[0], p1[0], p2[0])), maxX = Math.min(N - 1, Math.max(p0[0], p1[0], p2[0]));
-    const minY = Math.max(0, Math.min(p0[1], p1[1], p2[1])), maxY = Math.min(N - 1, Math.max(p0[1], p1[1], p2[1]));
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        const qx = x + 0.5, qy = y + 0.5;
-        const w0 = ((p1[0] - qx) * (p2[1] - qy) - (p1[1] - qy) * (p2[0] - qx)) / area;
-        const w1 = ((p2[0] - qx) * (p0[1] - qy) - (p2[1] - qy) * (p0[0] - qx)) / area;
-        const w2 = 1 - w0 - w1;
-        if (w0 < 0 || w1 < 0 || w2 < 0) continue;
-        const z = w0 * p0[2] + w1 * p1[2] + w2 * p2[2];
-        const idx = y * N + x;
-        if (z >= zb[idx]) continue;
-        zb[idx] = z;
-        const th = (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
-        const o = idx * 4;
-        for (let k = 0; k < 3; k++) {
-          const q = col[k] / 255 * 4; /* 5 levels per channel */
-          const fl = Math.floor(q);
-          px[o + k] = Math.min(4, fl + (q - fl > th ? 1 : 0)) * 63.75;
-        }
-        px[o + 3] = 255;
-      }
-    }
-  });
-  /* element vertex markers, front half only: same squares as the pentagon */
   for (let i = 0; i < 5; i++) {
-    if (W[i][2] > 0.15) continue;
-    const c = RGB[VORDER[i]];
-    for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 0; dx++) {
-      const x = P[i][0] + dx, y = P[i][1] + dy;
-      if (x < 0 || y < 0 || x >= N || y >= N) continue;
-      const o = (y * N + x) * 4;
-      px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
-    }
+    const j = (i + 1) % 5;
+    [[5, i, j], [6, j, i]].forEach(function (f) {
+      const a = W[f[0]], b = W[f[1]], c = W[f[2]];
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      const nl = Math.hypot(n[0], n[1], n[2]) || 1;
+      n = [n[0] / nl, n[1] / nl, n[2] / nl];
+      /* face the camera (it looks down +z): flip rather than trust winding */
+      const ctr = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 + D];
+      if (n[0] * ctr[0] + n[1] * ctr[1] + n[2] * ctr[2] > 0) n = [-n[0], -n[1], -n[2]];
+      const lit = 0.26 + 0.9 * Math.max(0, (n[0] * L[0] + n[1] * L[1] + n[2] * L[2]) / ln);
+      const ca = RGB[CRYSTAL_ORDER[i]], cb = RGB[CRYSTAL_ORDER[j]];
+      const col = [0, 1, 2].map(function (k) { return Math.min(255, (ca[k] + cb[k]) / 2 * lit); });
+      const p0 = P[f[0]], p1 = P[f[1]], p2 = P[f[2]];
+      const area = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
+      if (area === 0) return;
+      const minX = Math.max(0, Math.min(p0[0], p1[0], p2[0])), maxX = Math.min(w - 1, Math.max(p0[0], p1[0], p2[0]));
+      const minY = Math.max(0, Math.min(p0[1], p1[1], p2[1])), maxY = Math.min(h - 1, Math.max(p0[1], p1[1], p2[1]));
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const qx = x + 0.5, qy = y + 0.5;
+          const w0 = ((p1[0] - qx) * (p2[1] - qy) - (p1[1] - qy) * (p2[0] - qx)) / area;
+          const w1 = ((p2[0] - qx) * (p0[1] - qy) - (p2[1] - qy) * (p0[0] - qx)) / area;
+          const w2 = 1 - w0 - w1;
+          if (w0 < 0 || w1 < 0 || w2 < 0) continue;
+          const z = w0 * p0[2] + w1 * p1[2] + w2 * p2[2];
+          const idx = y * w + x;
+          if (z >= zb[idx]) continue;
+          zb[idx] = z;
+          const th = (BAYER4[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+          const o = idx * 4;
+          for (let k = 0; k < 3; k++) {
+            const q = col[k] / 255 * 4; /* 5 levels per channel */
+            const fl = Math.floor(q);
+            px[o + k] = Math.min(4, fl + (q - fl > th ? 1 : 0)) * 63.75;
+          }
+          px[o + 3] = 255;
+        }
+      }
+    });
   }
-  ctx.putImageData(img, 0, 0);
+  return P;
+}
+
+function plotPx(fr, x, y, c) {
+  if (x < 0 || y < 0 || x >= fr.w || y >= fr.h) return;
+  const o = (y * fr.w + x) * 4;
+  fr.px[o] = c[0]; fr.px[o + 1] = c[1]; fr.px[o + 2] = c[2]; fr.px[o + 3] = 255;
+}
+
+/* element vertex markers, front half only: same squares as the pentagon */
+function crystalMarkers(fr, W, P) {
+  const RGB = elementRGB();
+  for (let i = 0; i < 5; i++) {
+    if (W[i][2] > W[5][2] + 0.15) continue;
+    for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 0; dx++) plotPx(fr, P[i][0] + dx, P[i][1] + dy, RGB[CRYSTAL_ORDER[i]]);
+  }
+}
+
+/* A dithered Bresenham line: solid-ish for "feeds", dashed for "checks" */
+function ditherLine(fr, a, b, c, dashed, faint) {
+  let x0 = a[0], y0 = a[1];
+  const x1 = b[0], y1 = b[1];
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy, n = 0;
+  for (;;) {
+    const on = dashed ? (n % 6) < 3 : true;
+    if (on && (!faint || ((x0 + y0) & 1) === 0)) plotPx(fr, x0, y0, c);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+    n++;
+  }
+}
+
+function newFrame(ctx, w, h, F, D) {
+  const img = ctx.createImageData(w, h);
+  return { img: img, px: img.data, zb: new Float32Array(w * h).fill(1e9), w: w, h: h, F: F, D: D };
+}
+
+function drawCrystal(cv, t, scale) {
+  const ctx = cv.getContext("2d");
+  const N = cv.width;
+  const radii = cv.dataset.r.split(",").map(Number);
+  const dir = Number(cv.dataset.dir) || 1;
+  const fr = newFrame(ctx, N, N, N * 1.65, 4.6);
+  const W = crystalVerts(radii, t, dir, scale == null ? 1 : scale);
+  crystalMarkers(fr, W, rasterCrystal(fr, W));
+  ctx.putImageData(fr.img, 0, 0);
+}
+
+/* Orbit scene: two crystals circle a shared center, and the cycle edges
+   between their elements are drawn as dithered lines, colored by the
+   element doing the feeding or checking. */
+function orbitHTML(a, b, edges, aria) {
+  return '<canvas class="orbit" width="150" height="84" data-ra="' + crystalRadii(a).join(",") +
+    '" data-rb="' + crystalRadii(b).join(",") +
+    "\" data-edges='" + JSON.stringify(edges) + "' role=\"img\" aria-label=\"" + esc(aria) + '"></canvas>';
+}
+
+function drawOrbit(cv, t) {
+  const ctx = cv.getContext("2d");
+  const w = cv.width, h = cv.height;
+  const fr = newFrame(ctx, w, h, h * 1.5, 5.2);
+  const ra = cv.dataset.ra.split(",").map(Number), rb = cv.dataset.rb.split(",").map(Number);
+  const th = t * 0.45;
+  const offA = [Math.cos(th) * 1.3, 0, Math.sin(th) * 0.8];
+  const offB = [-offA[0], 0, -offA[2]];
+  const WA = crystalVerts(ra, t, 1, 0.62, offA), WB = crystalVerts(rb, t, -1, 0.62, offB);
+  const PA = rasterCrystal(fr, WA), PB = rasterCrystal(fr, WB);
+  crystalMarkers(fr, WA, PA);
+  crystalMarkers(fr, WB, PB);
+  const RGB = elementRGB();
+  JSON.parse(cv.dataset.edges).forEach(function (e) {
+    const pf = e.from === "a" ? PA : PB, pt = e.to === "a" ? PA : PB;
+    const fi = CRYSTAL_ORDER.indexOf(e.fe), ti = CRYSTAL_ORDER.indexOf(e.te);
+    ditherLine(fr, pf[fi], pt[ti], RGB[e.fe], e.kind === "checks", !e.major);
+  });
+  ctx.putImageData(fr.img, 0, 0);
 }
 
 /* Spin every not-yet-mounted crystal on screen until the screen changes */
 function mountCrystals() {
   const gen = UI._gen;
-  const items = Array.prototype.slice.call(document.querySelectorAll("canvas.crystal:not([data-live])"));
+  const items = Array.prototype.slice.call(document.querySelectorAll("canvas.crystal:not([data-live]), canvas.orbit:not([data-live])"));
   if (!items.length) return;
   items.forEach(function (cv) { cv.dataset.live = "1"; });
   const t0 = performance.now();
   function frame(now) {
     if (UI._gen !== gen) return;
     const t = (now - t0) / 1000 + 1.2;
-    items.forEach(function (cv) { drawCrystal(cv, t); });
+    items.forEach(function (cv) {
+      if (cv.classList.contains("orbit")) drawOrbit(cv, t); else drawCrystal(cv, t);
+    });
     if (!RM) requestAnimationFrame(frame);
   }
   frame(t0); /* first frame now: a hidden tab never shows an empty box */
@@ -1520,7 +1934,7 @@ function render() {
   const fn = {
     landing: renderLanding, framing: renderFraming, about: renderAbout,
     quiz: renderQuiz, reveal: renderReveal, blueprint: renderBlueprint,
-    direct: renderDirect
+    direct: renderDirect, lately: renderLately
   }[UI.screen];
   fn();
   renderFooter();
@@ -1532,15 +1946,24 @@ function render() {
 function renderLanding() {
   const L = CONTENT.landing;
   const profs = loadProfiles();
+  const current = UI.scores ? encodeBlueprint(UI.scores) : "";
   const savedList = profs.length
-    ? '<div style="margin-top:34px"><p class="lbl">' + L.savedLabel + "</p>" +
-      '<div class="footrow" style="justify-content:center;margin-top:12px">' +
+    ? '<div style="margin-top:34px;text-align:left"><p class="lbl" style="text-align:center">' + L.savedLabel + "</p>" +
+      '<div class="savedlist">' +
       profs.slice().reverse().map(function (p, i) {
+        const idx = profs.length - 1 - i;
         const s = p.scores;
         const desc = CONTENT.elements[s.primary].name +
           (s.secondary ? " + " + CONTENT.elements[s.secondary].name : "");
-        return '<button class="linkbtn" data-prof="' + (profs.length - 1 - i) + '">' +
-          (p.name ? esc(p.name) + " · " : "") + desc + " · " + esc(p.savedAt) + "</button>";
+        return '<div class="savedrow" data-row="' + idx + '">' +
+          '<button class="linkbtn savedopen" data-prof="' + idx + '">' +
+            '<b style="color:var(--' + s.primary + ')">' + esc(p.name || desc) + "</b>" +
+            '<span class="savedmeta">' + (p.name ? desc + " · " : "") + esc(p.savedAt) +
+              (p.observed ? " · " + L.readTag : "") + (p.code === current ? " · " + L.currentTag : "") + "</span>" +
+          "</button>" +
+          '<span class="savedacts"><button class="linkbtn" data-ren="' + idx + '">' + L.rename + "</button>" +
+          '<button class="linkbtn" data-del="' + idx + '">' + L.remove + "</button></span>" +
+        "</div>";
       }).join("") + "</div></div>"
     : "";
   $("#app").innerHTML =
@@ -1566,6 +1989,7 @@ function renderLanding() {
   $("#begin").addEventListener("click", function () {
     /* a fresh run: answers from the last run must not carry over */
     UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0;
+    UI.lately = {}; UI.profile.subject = "self";
     go("framing");
   });
   $("#godirect").addEventListener("click", function () { go("direct"); });
@@ -1584,8 +2008,43 @@ function renderLanding() {
     btn.addEventListener("click", function () {
       const p = loadProfiles()[Number(btn.dataset.prof)];
       if (!p) return;
-      try { adoptScores(hydrateScores(p.scores), p.name || ""); }
+      try { adoptScores(hydrateScores(p.scores), p.name || "", p.observed); }
       catch (e) { /* corrupt entry; leave the landing as is */ }
+    });
+  });
+  document.querySelectorAll("[data-del]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!window.confirm(L.confirmRemove)) return;
+      const list = loadProfiles();
+      list.splice(Number(btn.dataset.del), 1);
+      saveProfiles(list);
+      renderLanding();
+    });
+  });
+  document.querySelectorAll("[data-ren]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const idx = Number(btn.dataset.ren);
+      const row = document.querySelector('[data-row="' + idx + '"]');
+      const p = loadProfiles()[idx];
+      if (!row || !p) return;
+      row.innerHTML = '<form class="askrow" style="margin:0;flex:1">' +
+        '<input class="askin" maxlength="24" autocomplete="off" value="' + esc(p.name || "") + '">' +
+        '<button class="btn sm" type="submit">' + L.save + "</button></form>";
+      const input = row.querySelector("input");
+      input.focus();
+      row.querySelector("form").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        const list = loadProfiles();
+        if (!list[idx]) return;
+        list[idx].name = input.value.trim();
+        saveProfiles(list);
+        /* renaming the open result renames it everywhere */
+        if (UI.scores && list[idx].code === encodeBlueprint(UI.scores)) {
+          UI.profile.name = list[idx].name;
+          saveAll();
+        }
+        renderLanding();
+      });
     });
   });
 }
@@ -1651,6 +2110,9 @@ function renderAbout() {
   /* The name field below live-binds into UI.profile.name; stash the
      outgoing result first so a rename cannot relabel it. */
   if (stashCurrent()) toast(CONTENT.footer.stashToast);
+  renderAboutAgain();
+}
+function renderAboutAgain() {
   const a = CONTENT.about;
   function chipRow(items, key) {
     return '<div class="chips" data-key="' + key + '">' + items.map(function (it) {
@@ -1658,18 +2120,23 @@ function renderAbout() {
       return '<button class="chip" data-value="' + esc(it.value) + '" aria-pressed="' + on + '">' + esc(it.label) + "</button>";
     }).join("") + "</div>";
   }
+  const other = UI.profile.subject === "other";
   $("#app").innerHTML =
     '<div class="screen" style="padding-top:4vh">' +
       '<p class="lbl">' + a.label + "</p>" +
       '<h2 class="display" style="margin:10px 0 8px">' + a.title + "</h2>" +
       '<p style="color:var(--ink-70)">' + a.intro + "</p>" +
-      '<div class="field"><label class="lbl" for="nm" style="display:block;margin-bottom:10px">' + a.nameLabel + "</label>" +
+      '<div class="field"><p class="lbl">' + a.subjectPrompt + "</p>" + chipRow(a.subjectOptions, "subject") +
+        (other ? '<p class="note">' + a.otherNote + "</p>" : "") + "</div>" +
+      '<div class="field"><label class="lbl" for="nm" style="display:block;margin-bottom:10px">' +
+        (other ? a.otherNameLabel : a.nameLabel) + "</label>" +
         '<input class="name" id="nm" maxlength="24" autocomplete="off" value="' + esc(UI.profile.name) + '"></div>' +
-      '<div class="field"><p class="lbl">' + a.agePrompt + "</p>" + chipRow(a.ageBands, "ageBand") + "</div>" +
-      '<div class="field"><p class="lbl">' + a.seekingPrompt + "</p>" + chipRow(a.seekingOptions, "seeking") +
-        '<p class="note">' + a.seekingNote + "</p></div>" +
-      '<div class="field"><p class="lbl">' + a.polarityPrompt + "</p>" + chipRow(a.polarityOptions, "polarity") + "</div>" +
-      '<div style="margin-top:26px"><button class="btn wide" id="start" disabled>' + a.button + "</button></div>" +
+      (other ? "" :
+        '<div class="field"><p class="lbl">' + a.agePrompt + "</p>" + chipRow(a.ageBands, "ageBand") + "</div>" +
+        '<div class="field"><p class="lbl">' + a.seekingPrompt + "</p>" + chipRow(a.seekingOptions, "seeking") +
+          '<p class="note">' + a.seekingNote + "</p></div>" +
+        '<div class="field"><p class="lbl">' + a.polarityPrompt + "</p>" + chipRow(a.polarityOptions, "polarity") + "</div>") +
+      '<div style="margin-top:26px"><button class="btn wide" id="start" disabled>' + (other ? a.otherButton : a.button) + "</button></div>" +
     "</div>";
 
   function refresh() {
@@ -1679,15 +2146,28 @@ function renderAbout() {
         c.setAttribute("aria-pressed", String(UI.profile[key] === c.dataset.value));
       });
     });
-    $("#start").disabled = !(UI.profile.ageBand && UI.profile.seeking && UI.profile.polarity);
+    /* every result carries a name, so saved lists and Compare stay legible */
+    const named = !!UI.profile.name;
+    $("#start").disabled = UI.profile.subject === "other"
+      ? !named
+      : !(named && UI.profile.ageBand && UI.profile.seeking && UI.profile.polarity);
   }
   document.querySelectorAll(".chips .chip").forEach(function (c) {
     c.addEventListener("click", function () {
-      UI.profile[c.parentElement.dataset.key] = c.dataset.value;
+      const key = c.parentElement.dataset.key;
+      const was = UI.profile[key];
+      UI.profile[key] = c.dataset.value;
+      if (key === "subject" && was !== c.dataset.value) {
+        /* switching who the run is about clears the name; the outgoing
+           result was already stashed above under its own name */
+        UI.profile.name = "";
+        renderAboutAgain();
+        return;
+      }
       refresh();
     });
   });
-  $("#nm").addEventListener("input", function () { UI.profile.name = $("#nm").value.trim(); });
+  $("#nm").addEventListener("input", function () { UI.profile.name = $("#nm").value.trim(); refresh(); });
   $("#start").addEventListener("click", function () { go("quiz"); });
   refresh();
 }
@@ -1698,6 +2178,7 @@ function renderQuiz() {
     UI.optionOrder[q.id] = shuffle(q.options.map(function (o) { return o.el; }));
   }
   const order = UI.optionOrder[q.id];
+  const obs = UI.profile.subject === "other";
   const nn = function (n) { return (n < 10 ? "0" : "") + n; };
 
   const dots = CONTENT.questions.map(function (_, i) {
@@ -1712,7 +2193,7 @@ function renderQuiz() {
     const tag = isPick ? '<span class="tag">' + CONTENT.quiz.pickTag + "</span>"
              : isAlso ? '<span class="tag">' + CONTENT.quiz.alsoTag + "</span>" : "";
     return '<button class="' + cls + '" data-el="' + el + '" aria-pressed="' + isPick + '">' +
-      esc(o.text) + tag + "</button>";
+      esc(obs && o.o ? o.o : o.text) + tag + "</button>";
   }).join("");
 
   $("#app").innerHTML =
@@ -1723,11 +2204,12 @@ function renderQuiz() {
           nn(UI.qIndex + 1) + " / " + nn(CONTENT.questions.length) + "</span>" +
       "</div>" +
       '<div class="dots" aria-hidden="true">' + dots + "</div>" +
-      '<h2 class="qtext">' + esc(q.text) + "</h2>" +
+      (obs ? '<p class="lbl" style="margin-bottom:6px">' + esc(UI.profile.name) + "</p>" : "") +
+      '<h2 class="qtext">' + esc(obs && q.other ? q.other : q.text) + "</h2>" +
       "<div>" + opts + "</div>" +
       '<p class="hint">' + CONTENT.quiz.hint + "</p>" +
       '<div class="qnav"><button class="btn wide" id="next"' + (UI.picks[q.id] ? "" : " disabled") + ">" +
-        (UI.qIndex === CONTENT.questions.length - 1 ? CONTENT.quiz.finish : CONTENT.quiz.next) +
+        CONTENT.quiz.next +
       "</button></div>" +
     "</div>";
 
@@ -1776,15 +2258,55 @@ function renderQuiz() {
   $("#next").addEventListener("click", function () {
     if (!UI.picks[q.id]) return;
     if (UI.qIndex < CONTENT.questions.length - 1) { UI.qIndex++; renderQuiz(); renderFooter(); }
-    else finishQuiz();
+    else go("lately");
   });
+}
+
+/* The stress check: five frequency rows after the scenario bank */
+function renderLately() {
+  const L = CONTENT.lately;
+  const obs = UI.profile.subject === "other";
+  $("#app").innerHTML =
+    '<div class="screen">' +
+      '<div class="qhead"><button class="linkbtn" id="back">' + CONTENT.quiz.back + "</button>" +
+        '<span class="qnum">' + L.label.toUpperCase() + "</span></div>" +
+      (obs ? '<p class="lbl" style="margin:16px 0 6px">' + esc(UI.profile.name) + "</p>" : "") +
+      '<h2 class="qtext" style="margin-top:16px">' + (obs ? L.titleOther : L.title) + "</h2>" +
+      '<p class="hint" style="margin-top:-8px">' + L.intro + "</p>" +
+      L.items.map(function (it) {
+        return '<div class="field" style="margin:20px 0"><p style="font-size:15.5px;line-height:1.5">' + (obs ? it.other : it.self) + "</p>" +
+          '<div class="chips" data-el="' + it.el + '">' + L.scale.map(function (lab, v) {
+            return '<button class="chip" data-v="' + v + '" aria-pressed="' + (UI.lately[it.el] === v) + '">' + lab + "</button>";
+          }).join("") + "</div></div>";
+      }).join("") +
+      '<div class="qnav"><button class="btn wide" id="next" disabled>' + L.button + "</button></div>" +
+    "</div>";
+  function refresh() {
+    document.querySelectorAll(".chips[data-el]").forEach(function (row) {
+      row.querySelectorAll(".chip").forEach(function (c) {
+        c.setAttribute("aria-pressed", String(UI.lately[row.dataset.el] === Number(c.dataset.v)));
+      });
+    });
+    $("#next").disabled = !ELS.every(function (e) { return UI.lately[e] >= 0; });
+  }
+  document.querySelectorAll(".chips[data-el] .chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      UI.lately[c.parentElement.dataset.el] = Number(c.dataset.v);
+      refresh();
+    });
+  });
+  $("#back").addEventListener("click", function () { UI.qIndex = CONTENT.questions.length - 1; go("quiz"); });
+  $("#next").addEventListener("click", function () { if (!$("#next").disabled) finishQuiz(); });
+  refresh();
 }
 
 function finishQuiz() {
   const kept = stashCurrent(); /* a retake never destroys the old result */
-  UI.scores = scoreAnswers(answerArray());
+  UI.scores = scoreAnswers(answerArray(), UI.lately);
+  UI.observed = UI.profile.subject === "other";
   UI._persona = null; /* dyad was computed against the previous scores */
   saveAll();
+  stashCurrent(); /* list the new result right away */
   go("reveal");
   if (kept) toast(CONTENT.footer.stashToast);
 }
@@ -1920,6 +2442,7 @@ function renderBlueprint() {
     '<div class="screen">' +
       '<div class="bphead" style="padding-top:2vh">' +
         '<p class="lbl">' + b.label + (UI.profile.name ? " · " + esc(UI.profile.name) : "") + "</p>" +
+        (UI.observed ? '<p class="micro" style="margin-top:8px">' + esc(fill(CONTENT.observed.banner, { name: UI.profile.name || CONTENT.compare.unnamedOther })) + "</p>" : "") +
         '<div style="margin:14px 0 0">' + crystalHTML(s, { size: 132, aria: "Your element crystal" }) + "</div>" +
         '<div style="margin:6px 0 6px">' + pentagonSVG(s, { size: 250 }) + "</div>" +
         '<h2 class="display bpname">' + nameHTML + "</h2>" +
@@ -1929,12 +2452,178 @@ function renderBlueprint() {
         '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p>" +
       "</div>" +
       body +
+      matchesSectionHTML() +
       compareSectionHTML() +
       personaSectionHTML() +
       askSectionHTML() +
     "</div>";
   bindCompare();
+  renderMatches();
   setupCompanion();
+}
+
+/* ---------- matches: the 25 combos, as The Pull and The Hold ---------- */
+function comboName(m) {
+  const M = CONTENT.matches;
+  const span = function (e) { return '<span style="color:var(--' + e + ')">' + CONTENT.elements[e].name + "</span>"; };
+  return m.p1 === m.p2 ? M.pure + " " + span(m.p1) : span(m.p1) + " / " + span(m.p2);
+}
+function comboText(m) {
+  return m.p1 === m.p2 ? CONTENT.matches.pure + " " + CONTENT.elements[m.p1].name
+    : CONTENT.elements[m.p1].name + " / " + CONTENT.elements[m.p2].name;
+}
+
+function matchesSectionHTML() {
+  const M = CONTENT.matches;
+  return '<div class="section" id="matchsec"><p class="lbl">' + M.label + "</p>" +
+    '<div class="rule" style="background:var(--' + UI.scores.primary + ')"></div>' +
+    (UI.observed ? '<p class="micro">' + CONTENT.observed.matchesNote + "</p>" :
+      '<p class="micro">' + M.intro + "</p><div id=\"matchbox\"></div>") + "</div>";
+}
+
+function renderMatches() {
+  const box = $("#matchbox");
+  if (!box) return;
+  const M = CONTENT.matches;
+  const rk = rankMatches(UI.scores, UI.profile);
+  const grounded = UI.scores.state === "grounded";
+  const view = grounded ? "hold" : (UI._matchView || "pull");
+  const list = rk[view];
+  const all = !!UI._matchAll;
+  const row = function (m, rank) {
+    const key = m.p1 + "-" + m.p2;
+    const open = UI._matchOpen === key;
+    let detail = "";
+    if (open) {
+      const partner = { primary: m.p1, secondary: m.p1 === m.p2 ? null : m.p2 };
+      const you = UI.profile.name || CONTENT.compare.unnamedSelf;
+      detail = '<div class="matchdetail"><p style="font-size:15px">' + CONTENT.relations[m.relation] + "</p>" +
+        '<div class="dyadnums">' +
+          '<div class="dn"><span class="micro">' + CONTENT.persona.stability + "</span><b>" + m.stab + "</b></div>" +
+          '<div class="dn"><span class="micro">' + CONTENT.persona.chemistry + "</span><b>" + m.chem + "</b></div>" +
+        "</div>" +
+        reportHTML(pairingReport(UI.scores, partner, you, fill(M.partner, { combo: comboText(m) }))) + "</div>";
+    }
+    return '<div class="matchrow' + (open ? " open" : "") + '">' +
+      '<button class="matchhead" data-match="' + key + '" aria-expanded="' + open + '">' +
+        '<span class="mono mrank">' + (rank < 9 ? "0" : "") + (rank + 1) + "</span>" +
+        '<span class="mname">' + comboName(m) + "</span>" +
+        '<span class="mono mscore">' + m.score + "</span>" +
+        '<span class="mtier">' + CONTENT.tiers[m.tier] + (m.trap ? " · " + CONTENT.persona.trapBadge : "") + "</span>" +
+      "</button>" + detail + "</div>";
+  };
+  const rows = function (items, offset) { return items.map(function (m, i) { return row(m, offset + i); }).join(""); };
+  const toggle = grounded ? "" :
+    '<div class="chips" style="margin-top:14px" id="mtoggle">' +
+      '<button class="chip" data-view="pull" aria-pressed="' + (view === "pull") + '">' + M.pull + "</button>" +
+      '<button class="chip" data-view="hold" aria-pressed="' + (view === "hold") + '">' + M.hold + "</button>" +
+    "</div>";
+  const gloss = grounded
+    ? fill(M.groundedNote, { combo: comboText(rankMatches(Object.assign({}, UI.scores, { state: "reactive" }), UI.profile).pull[0]) })
+    : (view === "pull" ? M.pullGloss : M.holdGloss) + " " + M.gapNote;
+  box.innerHTML = toggle +
+    '<p class="micro" style="margin-top:10px">' + esc(gloss) + "</p>" +
+    (all
+      ? '<p class="lbl" style="margin-top:18px">' + M.all + "</p>" + rows(list, 0)
+      : '<p class="lbl" style="margin-top:18px">' + M.top + "</p>" + rows(list.slice(0, 5), 0) +
+        '<p class="lbl" style="margin-top:22px">' + M.bottom + "</p>" + rows(list.slice(-5), 20)) +
+    '<div class="footrow" style="margin-top:14px"><button class="linkbtn" id="mall">' + (all ? M.showLess : M.showAll) + "</button></div>";
+  box.querySelectorAll("[data-view]").forEach(function (b) {
+    b.addEventListener("click", function () { UI._matchView = b.dataset.view; renderMatches(); });
+  });
+  box.querySelectorAll("[data-match]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      UI._matchOpen = UI._matchOpen === b.dataset.match ? null : b.dataset.match;
+      renderMatches();
+    });
+  });
+  $("#mall").addEventListener("click", function () { UI._matchAll = !all; renderMatches(); });
+}
+
+/* ---------- save as image: a pixel-art card, drawn on canvas ---------- */
+function saveCardImage(kind) {
+  const W = 1080, H = 1350;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const g = cv.getContext("2d");
+  const cs = getComputedStyle(document.documentElement);
+  const col = function (e) { return cs.getPropertyValue("--" + e).trim() || "#F4F7F5"; };
+  const INK = "#F4F7F5", DIM = "rgba(244,247,245,.6)";
+  const MONO = "'IBM Plex Mono','Cascadia Mono',Consolas,'Courier New',monospace";
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+  g.imageSmoothingEnabled = false;
+  const text = function (str, x, y, size, color, weight, align, spacing) {
+    g.font = (weight || 700) + " " + size + "px " + MONO;
+    g.fillStyle = color || INK;
+    g.textAlign = align || "center";
+    if ("letterSpacing" in g) g.letterSpacing = (spacing || 0) + "px";
+    g.fillText(str, x, y);
+  };
+  /* one crystal frame, rendered small and scaled up crunchy */
+  const crystal = function (scores, x, y, size, t) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 72;
+    c.dataset.r = crystalRadii(scores).join(",");
+    drawCrystal(c, t);
+    g.drawImage(c, x - size / 2, y - size / 2, size, size);
+  };
+  const pctLine = function (s) {
+    return ELS.slice().sort(function (a, b) { return s.pct[b] - s.pct[a]; })
+      .filter(function (e) { return s.pct[e] > 0; })
+      .map(function (e) { return CONTENT.elements[e].name.toUpperCase() + " " + s.pct[e] + "%"; }).join("  ");
+  };
+  text(CONTENT.meta.app.toUpperCase(), W / 2, 110, 38, INK, 700, "center", 8);
+  let name = "";
+  if (kind === "pair" && UI._pair) {
+    const P = UI._pair;
+    name = P.a.n + "-" + P.b.n;
+    crystal(P.a.s, W * 0.3, 420, 380, 2.0);
+    crystal(P.b.s, W * 0.7, 420, 380, 3.4);
+    [[P.a, W * 0.3], [P.b, W * 0.7]].forEach(function (pr) {
+      text(pr[0].n.toUpperCase(), pr[1], 680, 34, col(pr[0].s.primary), 700, "center", 4);
+      text(CONTENT.elements[pr[0].s.primary].name.toUpperCase() +
+        (pr[0].s.secondary ? " + " + CONTENT.elements[pr[0].s.secondary].name.toUpperCase() : ""), pr[1], 726, 22, DIM, 500, "center", 3);
+    });
+    text(String(P.ab.score), W / 2, 900, 150, INK, 700);
+    text(CONTENT.tiers[P.ab.tier].toUpperCase(), W / 2, 970, 30, INK, 700, "center", 6);
+    text(CONTENT.relations[P.ab.relation], W / 2, 1040, 26, DIM, 400);
+    if (P.ab.trap) text(CONTENT.persona.trapBadge.toUpperCase(), W / 2, 1090, 22, col("fire"), 700, "center", 4);
+  } else {
+    const s = UI.scores;
+    name = UI.profile.name || "blueprint";
+    crystal(s, W / 2, 500, 560, 2.2);
+    if (UI.profile.name) text(UI.profile.name.toUpperCase() + (UI.observed ? " · " + CONTENT.landing.readTag.toUpperCase() : ""),
+      W / 2, 190, 30, DIM, 500, "center", 6);
+    const head = isCoPrimary(s)
+      ? CONTENT.elements[s.primary].name + " + " + CONTENT.elements[s.secondary].name
+      : CONTENT.elements[s.primary].name;
+    text(head.toUpperCase(), W / 2, 880, 84, col(s.primary), 700, "center", 10);
+    text(CONTENT.elements[s.primary].archetype, W / 2, 940, 28, DIM, 400);
+    text(pctLine(s), W / 2, 1010, 24, INK, 500, "center", 2);
+    text(CONTENT.states[s.state].name.toUpperCase(), W / 2, 1080, 26, INK, 700, "center", 8);
+    g.strokeStyle = INK; g.lineWidth = 3;
+    const tw = 300; g.strokeRect(W / 2 - tw / 2, 1042, tw, 56);
+  }
+  text(CONTENT.image.footer.toUpperCase(), W / 2, H - 60, 18, DIM, 500, "center", 4);
+  /* scanlines last, like the screen */
+  g.fillStyle = "rgba(255,255,255,.035)";
+  for (let y = 0; y < H; y += 6) g.fillRect(0, y, W, 2);
+  const file = "elemental-blueprint-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".png";
+  cv.toBlob(function (blob) {
+    if (!blob) return;
+    const f = typeof File === "function" ? new File([blob], file, { type: "image/png" }) : null;
+    if (f && navigator.canShare && navigator.canShare({ files: [f] })) {
+      navigator.share({ files: [f] }).catch(function () { /* cancelled */ });
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = file;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast(CONTENT.image.saved);
+  }, "image/png");
 }
 
 /* ---------- compare: pair the active result with a saved one ----------
@@ -1969,7 +2658,8 @@ function compareSectionHTML() {
         const s = x.p.scores;
         return '<button class="linkbtn" data-cmp="' + x.i + '">' +
           (x.p.name ? esc(x.p.name) + " · " : "") + CONTENT.elements[s.primary].name +
-          (s.secondary ? " + " + CONTENT.elements[s.secondary].name : "") + " · " + esc(x.p.savedAt) + "</button>";
+          (s.secondary ? " + " + CONTENT.elements[s.secondary].name : "") + " · " + esc(x.p.savedAt) +
+          (x.p.observed ? " · " + CONTENT.landing.readTag : "") + "</button>";
       }).join("") + "</div>"
     : '<p class="micro" style="margin-top:10px">' + c.empty + "</p>";
   return '<div class="section" id="cmpsec"><p class="lbl">' + c.label + "</p>" +
@@ -1982,12 +2672,106 @@ function compareSectionHTML() {
     '<div id="cmpbox"></div></div>';
 }
 
-function renderCompare(other, otherName) {
+/* The written report, as cards. Shared by Compare and match details. */
+function reportHTML(r) {
+  const R = CONTENT.report;
+  const list = function (xs) { return '<ul class="plain">' + xs.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; };
+  return '<div class="cols" style="margin-top:16px">' +
+      '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.strengthsLabel + "</p>" + list(r.strengths) + "</div>" +
+      '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.frictionsLabel + "</p>" + list(r.frictions) + "</div>" +
+    "</div>" +
+    '<div class="card" style="margin-top:14px"><p class="lbl" style="margin-bottom:10px">' + R.needsLabel + "</p>" + list(r.needs) + "</div>" +
+    '<div class="card" style="margin-top:14px"><p class="lbl">' + R.repairLabel + "</p>" +
+      '<p class="micro" style="margin:6px 0 4px">' + R.repairIntro + "</p>" +
+      r.repair.map(function (x) {
+        return '<p class="askq" style="color:var(--' + x.el + ')">&gt; ' + esc(x.who) + "</p>" +
+          '<p style="font-size:15px;line-height:1.65">"' + esc(x.text) + '"</p>';
+      }).join("") +
+    "</div>";
+}
+
+/* Two overlaid pentagons with cycle arrows between both people's
+   elements. Arrow color is the element doing the feeding or checking. */
+function dyadPentagonSVG(a, b, edges) {
+  const VORDER = ["fire", "earth", "metal", "water", "wood"];
+  const cx = 180, cy = 180, R = 118, LR = R + 26;
+  const f = function (n) { return n.toFixed(1); };
+  const vx = {};
+  VORDER.forEach(function (e, i) {
+    const an = (-90 + i * 72) * Math.PI / 180;
+    vx[e] = { x: cx + R * Math.cos(an), y: cy + R * Math.sin(an), lx: cx + LR * Math.cos(an), ly: cy + LR * Math.sin(an) };
+  });
+  const uid = "dy" + (++svgUid);
+  let defs = "<defs>" + VORDER.map(function (e) {
+    return '<marker id="' + uid + e + '" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">' +
+      '<path d="M0,0 L8,4 L0,8 Z" style="fill:var(--' + e + ')"/></marker>';
+  }).join("") + "</defs>";
+  let ring = "";
+  VORDER.forEach(function (e, i) {
+    const p = vx[e], q = vx[VORDER[(i + 1) % 5]], r2 = vx[VORDER[(i + 2) % 5]];
+    ring += '<line x1="' + f(p.x) + '" y1="' + f(p.y) + '" x2="' + f(q.x) + '" y2="' + f(q.y) + '" stroke="var(--ink)" stroke-opacity=".22" shape-rendering="crispEdges"/>';
+    ring += '<line x1="' + f(p.x) + '" y1="' + f(p.y) + '" x2="' + f(r2.x) + '" y2="' + f(r2.y) + '" stroke="var(--ink)" stroke-opacity=".08" shape-rendering="crispEdges"/>';
+  });
+  const poly = function (sc, dash) {
+    const pts = VORDER.map(function (e) {
+      const k = Math.max(0.04, (sc.pct[e] || 0) / 100) * 1.6;
+      const r = Math.min(1, k);
+      return f(cx + (vx[e].x - cx) * r) + "," + f(cy + (vx[e].y - cy) * r);
+    }).join(" ");
+    return '<polygon points="' + pts + '" fill="none" stroke="var(--ink)" stroke-width="1.5"' +
+      (dash ? ' stroke-dasharray="4 3"' : ' fill-opacity=".08"') + ' shape-rendering="crispEdges"/>';
+  };
+  /* arrows run vertex to vertex; a "same" edge rings the shared vertex */
+  let arrows = "";
+  edges.forEach(function (e, n) {
+    const w = e.major ? 2.4 : 1.2, op = e.major ? 1 : 0.6;
+    if (e.kind === "same") {
+      arrows += '<rect x="' + f(vx[e.fe].x - 9 - n * 3) + '" y="' + f(vx[e.fe].y - 9 - n * 3) + '" width="' + (18 + n * 6) +
+        '" height="' + (18 + n * 6) + '" fill="none" style="stroke:var(--' + e.fe + ')" stroke-width="' + w + '" opacity="' + op + '"/>';
+      return;
+    }
+    const p = vx[e.fe], q = vx[e.te];
+    const dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
+    const ux = dx / d, uy = dy / d;
+    /* bow the line slightly so two arrows on one pair stay apart */
+    const mx = (p.x + q.x) / 2 - uy * 14 * (n % 2 ? -1 : 1), my = (p.y + q.y) / 2 + ux * 14 * (n % 2 ? -1 : 1);
+    arrows += '<path d="M' + f(p.x + ux * 12) + "," + f(p.y + uy * 12) + " Q" + f(mx) + "," + f(my) + " " +
+      f(q.x - ux * 14) + "," + f(q.y - uy * 14) + '" fill="none" style="stroke:var(--' + e.fe + ')" stroke-width="' + w +
+      '" opacity="' + op + '"' + (e.kind === "checks" ? ' stroke-dasharray="6 4"' : "") +
+      ' marker-end="url(#' + uid + e.fe + ')"/>';
+  });
+  let labels = "";
+  VORDER.forEach(function (e) {
+    labels += '<rect x="' + f(vx[e].x - 3.5) + '" y="' + f(vx[e].y - 3.5) + '" width="7" height="7" style="fill:var(--' + e + ')"/>' +
+      '<text x="' + f(vx[e].lx) + '" y="' + f(vx[e].ly + 4) + '" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing=".18em" style="fill:var(--' + e + ')">' +
+      CONTENT.elements[e].name.toUpperCase() + "</text>";
+  });
+  return '<svg class="penta" viewBox="0 0 360 360" style="width:min(86vw,340px)" role="img" aria-label="' + esc(CONTENT.cycles.label) + '">' +
+    defs + ring + poly(a, false) + poly(b, true) + arrows + labels + "</svg>";
+}
+
+function edgeLines(edges, aName, bName) {
+  const C = CONTENT.cycles;
+  const en = function (e) { return CONTENT.elements[e].name; };
+  return edges.map(function (e) {
+    const who = function (side) { return side === "a" ? aName : bName; };
+    if (e.kind === "same") return fill(C.same, { a: aName, b: bName, e: en(e.fe) });
+    return fill(e.kind === "feeds" ? C.feeds : C.checks, { a: who(e.from), ea: en(e.fe), b: who(e.to), eb: en(e.te) });
+  });
+}
+
+function renderCompare(other, otherName, otherObserved) {
   const c = CONTENT.compare;
-  const me = UI.profile.name || c.unnamedSelf;
-  const them = otherName || c.unnamedOther;
-  const ab = dyadScore(UI.scores, other);
-  const ba = dyadScore(other, UI.scores);
+  /* "you" is the user's own result: if the open one is a read of
+     someone else and the saved one is not, turn the pairing around */
+  let A = { s: UI.scores, n: UI.profile.name || c.unnamedSelf };
+  let B = { s: other, n: otherName || c.unnamedOther };
+  if (UI.observed && !otherObserved) { const t = A; A = B; B = t; }
+  const ab = dyadScore(A.s, B.s);
+  const ba = dyadScore(B.s, A.s);
+  const edges = cycleEdges(A.s, B.s);
+  const rep = pairingReport(A.s, B.s, A.n, B.n);
+  UI._pair = { a: A, b: B, ab: ab };
   const tag = function (s) {
     return '<p class="mono" style="font-size:12px;color:var(--ink-70);text-align:center">' +
       CONTENT.elements[s.primary].name + " " + s.pct[s.primary] + "%" +
@@ -1996,19 +2780,30 @@ function renderCompare(other, otherName) {
   };
   $("#cmpbox").innerHTML =
     '<div class="pcard">' +
-      '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px">' +
-        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(me) + "</p>" +
-          crystalHTML(UI.scores, { size: 110, aria: me + " crystal" }) +
-          pentagonSVG(UI.scores, { size: 200, aria: me + " element chart" }) + tag(UI.scores) + "</div>" +
-        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(them) + "</p>" +
-          crystalHTML(other, { size: 110, dir: -1, aria: them + " crystal" }) +
-          pentagonSVG(other, { size: 200, aria: them + " element chart" }) + tag(other) + "</div>" +
+      orbitHTML(A.s, B.s, edges, CONTENT.cycles.orbitAria) +
+      '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px">' +
+        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(A.n) + "</p>" +
+          pentagonSVG(A.s, { size: 200, aria: A.n + " element chart" }) + tag(A.s) + "</div>" +
+        '<div style="width:min(80vw,220px)"><p class="lbl" style="text-align:center">' + esc(B.n) + "</p>" +
+          pentagonSVG(B.s, { size: 200, aria: B.n + " element chart" }) + tag(B.s) + "</div>" +
       "</div>" +
-      dyadCardHTML(esc(me) + c.withWord + esc(them), ab) +
-      dyadCardHTML(esc(them) + c.withWord + esc(me), ba) +
+      dyadCardHTML(esc(A.n) + c.withWord + esc(B.n), ab) +
+      dyadCardHTML(esc(B.n) + c.withWord + esc(A.n), ba) +
       '<p class="micro" style="margin-top:12px">' + c.sideNote + "</p>" +
-      '<p class="micro" style="margin-top:8px">' + c.footer + "</p>" +
+      '<div class="section"><p class="lbl">' + CONTENT.cycles.label + "</p>" +
+        '<div class="rule" style="background:var(--' + A.s.primary + ')"></div>' +
+        dyadPentagonSVG(A.s, B.s, edges) +
+        '<ul class="plain" style="margin-top:10px">' + edgeLines(edges, A.n, B.n).map(function (x) {
+          return "<li>" + esc(x) + "</li>";
+        }).join("") + "</ul>" +
+        '<p class="micro" style="margin-top:8px">' + esc(fill(CONTENT.cycles.legend, { a: A.n, b: B.n })) + "</p>" +
+      "</div>" +
+      '<div class="section"><p class="lbl">' + CONTENT.report.label + "</p>" +
+        '<div class="rule" style="background:var(--' + B.s.primary + ')"></div>' + reportHTML(rep) + "</div>" +
+      '<div class="footrow" style="margin-top:18px"><button class="linkbtn" id="pairimg">' + CONTENT.image.pairButton + "</button></div>" +
+      '<p class="micro" style="margin-top:12px">' + c.footer + "</p>" +
     "</div>";
+  $("#pairimg").addEventListener("click", function () { saveCardImage("pair"); });
   mountCrystals();
 }
 
@@ -2017,7 +2812,7 @@ function bindCompare() {
     btn.addEventListener("click", function () {
       const p = loadProfiles()[Number(btn.dataset.cmp)];
       if (!p) return;
-      try { renderCompare(hydrateScores(p.scores), p.name || ""); }
+      try { renderCompare(hydrateScores(p.scores), p.name || "", p.observed); }
       catch (e) { /* corrupt entry; ignore */ }
     });
   });
@@ -2026,7 +2821,7 @@ function bindCompare() {
     const s = decodeBlueprint($("#cmpin").value);
     if (!s) { $("#cmpbad").hidden = false; return; }
     $("#cmpbad").hidden = true;
-    renderCompare(s, "");
+    renderCompare(s, "", false);
   });
 }
 
@@ -2252,6 +3047,7 @@ function renderFooter() {
       ? '<div class="footrow">' +
           '<button class="linkbtn" id="f-retake">' + f.retake + "</button>" +
           '<button class="linkbtn" id="f-copy">' + f.copyCode + "</button>" +
+          '<button class="linkbtn" id="f-img">' + CONTENT.image.button + "</button>" +
           '<button class="linkbtn" id="f-results">' + f.results + "</button>" +
           '<button class="linkbtn" id="f-erase">' + f.erase + "</button>" +
         "</div>"
@@ -2261,10 +3057,11 @@ function renderFooter() {
   if (hasResult) {
     $("#f-retake").addEventListener("click", function () {
       if (!window.confirm(f.confirmRetake)) return;
-      UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0;
+      UI.picks = {}; UI.alsos = {}; UI.optionOrder = {}; UI.qIndex = 0; UI.lately = {};
       go("quiz");
     });
     $("#f-results").addEventListener("click", function () { go("landing"); });
+    $("#f-img").addEventListener("click", function () { saveCardImage("single"); });
     $("#f-copy").addEventListener("click", function () {
       const code = encodeBlueprint(UI.scores);
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2301,7 +3098,8 @@ function toast(msg) {
   if (saved && saved.meta && saved.meta.version === 1 && saved.scores && saved.scores.primary &&
       saved.scores.pct && saved.scores.maturity) {
     try {
-      UI.profile = saved.profile || UI.profile;
+      UI.profile = Object.assign(UI.profile, saved.profile || {});
+      UI.observed = !!saved.observed;
       UI.scores = hydrateScores(saved.scores);
       go("blueprint");
     } catch (e) {

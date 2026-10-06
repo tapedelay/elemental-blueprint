@@ -6,7 +6,7 @@ Elemental Blueprint is a self-knowledge and dating-compatibility web app that tr
 
 `SPEC.md` in this folder is the authoritative product spec (authored by the client, Atasha's brother) with dated amendments in sections 3, 7, 11a, 11b, and 11c. Read it before changing engine math or copy.
 
-## 2. Build / run / test (verified 2026-07-09)
+## 2. Build / run / test (verified 2026-07-09; static run re-verified 2026-10-06 on macOS via `python3 -m http.server 8873`)
 
 There is no build step, no package.json, and no dependency install. Verified toolchain: Node v24.11.1 (any modern Node works; `server.js` uses only core `http`/`fs`/`path`/`child_process`).
 
@@ -15,7 +15,7 @@ There is no build step, no package.json, and no dependency install. Verified too
 | Run everything | `node server.js` from this folder, then open http://localhost:8873 |
 | One-click run (Windows) | double-click `launch.bat` (Windows Terminal tab running the server + opens the browser) |
 | Static only | open `index.html` directly; everything works except Ask / Read anyone, which self-hide |
-| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `10/10 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
+| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `13/13 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
 | Server syntax check | `node --check server.js` |
 | App script syntax check | `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"` |
 
@@ -48,7 +48,7 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 
 **Data flow, Read anyone:** name -> `buildPersonaPrompt()` (rules live in `CONTENT.persona.rules`) -> `POST /api/ask {search:true}` -> Claude returns strict JSON -> `parsePersona()` renormalizes pct to 100 and retypes primary/secondary from the numbers (never trusts the model's labels) -> `dyadScore(UI.scores, parsed.scores)` computes the pairing entirely locally from the `GEN`/`KE`/`REL` tables (SPEC section 4) -> rendered card + the pairing JSON is appended to subsequent Ask prompts.
 
-**Screens:** `landing / framing / about / quiz / reveal / blueprint / direct`, driven by `go(screen)` -> `render()` map. `render()` bumps the `UI._gen` generation counter, clears timers, and resets the companion busy flags; every async callback that touches the DOM captures `gen` and bails if it changed.
+**Screens:** `landing / framing / about / quiz / lately / reveal / blueprint / direct`, driven by `go(screen)` -> `render()` map. `render()` bumps the `UI._gen` generation counter, clears timers, and resets the companion busy flags; every async callback that touches the DOM captures `gen` and bails if it changed.
 
 **Storage:** `eb.v1` (active result), `eb.profiles.v1` (saved results, cap 12, auto-stash before anything replaces the active result). Both have in-memory fallbacks (`memStore` / `memProfiles`) for private-mode/quota failures. Ask history is in-memory only, never persisted.
 
@@ -62,10 +62,16 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 - Direct entry, blueprint-code loading, saved-results store (SPEC 11c), including forged-code rejection in `decodeBlueprint()`.
 - Repo is pushed to GitHub: private `tapedelay/elemental-blueprint`, local `master` in sync with `origin/master` (verified 2026-07-09, at this commit). Direct-to-master pushes, no branches or PRs, per portfolio convention.
 
-**Not started (SPEC phases 2-4):**
-- Phase 2: the 25 combination profiles and ranked matching. The dyad engine (`GEN`/`KE`/`REL`/`relationOf`/`dyadScore`) already exists as the seed; what is missing is the 25 written combo profiles and a ranking screen. SPEC section 10 requires writing all 25 in one session for voice consistency.
-- Phase 3: dual ranking ("who is good for you" vs "who you burn for", SPEC section 4) and the Compare mode for two saved codes.
-- Phase 4: motion polish and PWA packaging.
+**Added 2026-10-06 (SPEC 11d), 13/13 fixtures:**
+- Stress check screen (`lately`) after the bank; `scoreAnswers(answers, lately)` blends it into state. Fixes state barely depending on answers.
+- Observer reads (`profile.subject`, `UI.observed`, CONTENT `other`/`o` wording), required names, saved-result rename/delete, every result listed on finish.
+- Matches: `comboScore`/`rankMatches` with age/polarity modifiers, The Pull / The Hold, detail sheets.
+- Compare: both-direction cards, `cycleEdges` arrow pentagon, orbit scene, `pairingReport`; Read anyone shares `dyadCardHTML`.
+- Lo-poly crystal renderer (`crystalVerts`/`rasterCrystal`/`drawCrystal`/`drawOrbit`, `mountCrystals` under the `_gen` guard), boot, image export (`saveCardImage`).
+
+**Still open:**
+- SPEC section 10's 25 bespoke combo profiles (the report is relation/element-driven for now), friendship/work lens, PWA manifest, question bank growth toward ~20 items.
+- `index.html` is ~155 KB, just over SPEC section 10's ~150 KB guideline.
 
 **Untested / known gaps:**
 - No real-device pass yet (iPad/phone). The quiz's long-press "also me" gesture and the 375 px layout are the risk areas.
