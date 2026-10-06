@@ -425,8 +425,14 @@ const CONTENT = {
     frictionsLabel: "Where it grinds",
     needsLabel: "What each needs",
     repairLabel: "Repair scripts",
+    reachLabel: "Reaching each other",
+    reachIntro: "What to say to each pattern when it has gone hard to reach.",
+    reachLine: "To reach {name}",
+    asPartnerLabel: "As a partner",
+    asPartnerReach: "What someone could say to reach you",
     repairIntro: "For the moment the stress reflex fires. Said early, in your own words.",
     needsLine: "For {name}: {need}",
+    bothJoin: " and ",
     stressSame: "Under load you both {a}. Nobody is left to balance it, so agree in advance who breaks the pattern first.",
     stressPair: "Under load, {A} {a} while {B} {b}. Whoever notices first names it out loud.",
     stressVerb: {
@@ -514,6 +520,138 @@ const CONTENT = {
         ]
       }
     }
+  },
+
+  /* The 25 partner patterns (SPEC section 10): primary-secondary, doubles
+     are pure. Partner-side copy, independent of who is reading: what they
+     are like, what they bring, where they grind, and a script for
+     reaching them. The pairing report folds these in with the relation. */
+  combos: {
+    "wood-wood": { name: "The Builder at Full Tilt",
+      sketch: "All momentum. They love by building: plans, projects, a life with forward motion, and they want you moving with them.",
+      gives: "A partner who turns \"someday\" into a date on the calendar and clears the path in front of you.",
+      grinds: "Little patience for slow seasons; when they stall, the push turns toward whoever is nearest, often you.",
+      script: "I am with you on where we are going. I need one slow day to catch up, then let us move." },
+    "wood-fire": { name: "The Spark That Builds",
+      sketch: "Drive with charm attached. They chase big plans and pull people along; being near them feels like the start of something.",
+      gives: "Contagious momentum: they make your goals feel exciting and possible, and they say so out loud.",
+      grinds: "Fast and hot at once: the impulsive yes, the burnout after, and a temper that flares before it is examined.",
+      script: "I love the fire in this. Before we commit, can we sleep on it one night and decide tomorrow?" },
+    "wood-earth": { name: "The Homesteader",
+      sketch: "Ambition pointed at home. They build things people can live inside: a household rhythm, a family plan, work that feeds others.",
+      gives: "Effort you can feel: they act on your behalf and keep showing up, practically, for the long haul.",
+      grinds: "The push and the care pull against each other inside them; they over-commit for everyone, then resent the load in silence.",
+      script: "You have carried a lot for all of us. What is one thing I can take off your list this week?" },
+    "wood-metal": { name: "The Strategist",
+      sketch: "Drive with a blueprint. They want to win and they want to do it right; goals arrive with standards and a timeline.",
+      gives: "Ambition you can rely on: clear plans, clean follow-through, a partner who builds what they say they will.",
+      grinds: "Hard on themselves and then on you; criticism and impatience tend to arrive together.",
+      script: "I know the plan matters. Right now I need you on my side more than I need it to be right." },
+    "wood-water": { name: "The Visionary Doer",
+      sketch: "Depth that turns into action. They think long, then move decisively, steered by what feels meaningful rather than what is popular.",
+      gives: "Conviction: they know why they do things and invite you into the bigger picture.",
+      grinds: "They swing between long private deliberation and sudden action, and rarely narrate the middle part to you.",
+      script: "Walk me through how you got here. I want to be part of the thinking, not just the decision." },
+    "fire-fire": { name: "The Bright Room",
+      sketch: "Warmth at full volume. Expressive, affectionate, and most alive in company; with them, life rarely goes gray.",
+      gives: "Being adored out loud: delight, play, and a partner who turns ordinary days into occasions.",
+      grinds: "They need a steady return signal; when warmth dips, they reach for more noise, more people, or more reassurance.",
+      script: "I love you and I am not going anywhere. I need a quiet night, and it is not about us." },
+    "fire-wood": { name: "The Firestarter",
+      sketch: "Joy with an engine. They light up a room and then do something with the momentum: trips, gatherings, plans that actually happen.",
+      gives: "Adventure with follow-through: the fun ideas leave the group chat and arrive in real life.",
+      grinds: "The intensity can outrun you both; slowing down can feel to them like losing the spark.",
+      script: "I am all in on fun with you. Can we keep one evening with nothing on it, just us?" },
+    "fire-earth": { name: "The Host",
+      sketch: "Warmth that gathers people. They love by feeding, celebrating, and making sure nobody is left out.",
+      gives: "A home that feels alive, and a partner who remembers the birthday and throws the party.",
+      grinds: "They spend their warmth on everyone; you can feel you share them with the whole table, and their own needs come last.",
+      script: "You take such good care of everyone. Tonight, let me take care of you." },
+    "fire-metal": { name: "The Polished Performer",
+      sketch: "Charisma with standards. Warm and expressive in public, exacting in private; they care how things land.",
+      gives: "Style and spark: a partner who makes an effort, notices details, and brings out your best.",
+      grinds: "Hot, then cold: open and generous, then suddenly sharp or distant when something falls short of the picture.",
+      script: "When you go quiet and sharp, I lose you. Tell me what was not right, and I will hear it." },
+    "fire-water": { name: "The Hidden Depths",
+      sketch: "Bright on the surface, deep underneath. Fun in a room, intense one on one, with feelings that run further than they show.",
+      gives: "Both play and depth: laughter in the day, the real conversation late at night.",
+      grinds: "Pulled between showing and hiding; they can light up the room, then go under for days without explaining the shift.",
+      script: "I like both versions of you, the bright one and the quiet one. When you go under, just tell me you are coming back." },
+    "earth-earth": { name: "The Hearth",
+      sketch: "Steadiness made into a person. They love by being there: meals, rides, remembering, staying.",
+      gives: "Reliability you can lean your whole weight on: the partner who answers at 3 a.m. and means it.",
+      grinds: "Worry dressed as care; they can smother, resist change, and struggle to receive anything back.",
+      script: "I feel looked after by you every day. What do you need, just for you, this week?" },
+    "earth-wood": { name: "The Provider",
+      sketch: "Care with drive. They nurture through action: fixing, building, providing, making the plan for everyone.",
+      gives: "Practical devotion: problems get handled and the people they love are looked after.",
+      grinds: "Help can arrive as management; when worried, they push solutions on people who wanted company.",
+      script: "I do not need this fixed. I need you to sit with me for ten minutes." },
+    "earth-fire": { name: "The Warm Center",
+      sketch: "Nurture with sparkle. They make people feel at home and happy at the same time; their care comes with laughter.",
+      gives: "Emotional generosity: you feel welcomed, celebrated, and held all at once.",
+      grinds: "They give until empty and rarely say so; the hurt shows up later as exhaustion or quiet overwhelm.",
+      script: "You have been giving a lot. On a scale of one to ten, how full is your tank right now?" },
+    "earth-metal": { name: "The Steward",
+      sketch: "Care with structure. They keep life in order for the people they love: schedules, budgets, traditions kept.",
+      gives: "Security: a well-run life where things are handled properly and promises are kept.",
+      grinds: "Control can pass for care; they get rigid about the right way to do things and slow to bend.",
+      script: "I trust how much you care. Can we try it my way once and see what happens?" },
+    "earth-water": { name: "The Quiet Harbor",
+      sketch: "Calm, nurturing, and private. They hold space and listen deeply, but keep their own inner weather mostly to themselves.",
+      gives: "Safety: a presence that settles you, and someone who understands without needing every word.",
+      grinds: "Their worry turns inward; they ruminate quietly and may not say what is wrong until it is heavy.",
+      script: "You hold so much for me. I want to hold some for you. What has been on your mind?" },
+    "metal-metal": { name: "The Keel",
+      sketch: "Integrity in its purest form. Precise, principled, and private; their love shows as reliability and doing things right.",
+      gives: "Trust without asterisks: clear boundaries, honest words, promises kept exactly.",
+      grinds: "They can feel cold or exacting; affection comes through acts, and correction can arrive before warmth.",
+      script: "I know you show love by getting things right. Sometimes I need you to just say it." },
+    "metal-wood": { name: "The Architect-Builder",
+      sketch: "Standards with ambition. They plan carefully and execute hard; a partner who builds a life to spec.",
+      gives: "Competence: things get done well, and they will push you to grow.",
+      grinds: "Impatient with sloppiness, and with feelings that slow the plan down.",
+      script: "Your standards help us. Right now I need patience more than a fix." },
+    "metal-fire": { name: "The Guarded Flame",
+      sketch: "Discerning with a warm side. Reserved at first, then surprisingly expressive with the people who earn it.",
+      gives: "Deep loyalty: once they open, they are devoted, attentive, and openly proud of you.",
+      grinds: "Torn between holding back and opening up; after warmth they can feel exposed and pull back to regroup.",
+      script: "You do not have to be perfect with me. I liked who you were last night, all of it." },
+    "metal-earth": { name: "The Guardian",
+      sketch: "Principled and protective. They set the boundaries that keep their people safe, and they hold them.",
+      gives: "A dependable partner: structure, loyalty, and a deep sense of responsibility for the two of you.",
+      grinds: "Duty can crowd out spontaneity; their rules about how things should go can start to feel heavy.",
+      script: "Thank you for keeping us safe. Can we break one small rule together this weekend?" },
+    "metal-water": { name: "The Philosopher-Judge",
+      sketch: "A clear mind over a deep well. Thoughtful, discerning, and inward; they think in principles and long horizons.",
+      gives: "Wisdom and calm: a partner who sees clearly and rarely panics.",
+      grinds: "Under stress they retreat into being right and being silent at the same time.",
+      script: "I do not need the right answer. I need to know how you feel, even half-formed." },
+    "water-water": { name: "The Deep Well",
+      sketch: "Depth all the way down. Introspective, perceptive, and private; they love through understanding.",
+      gives: "Being truly seen: they notice what you do not say and remember what matters to you.",
+      grinds: "They disappear inward: long silences, theories built alone, and hard to reach under stress.",
+      script: "Take the time you need. Just give me one sentence before you go under, so I know where you are." },
+    "water-wood": { name: "The Quiet Force",
+      sketch: "Depth that moves. Reflective and private, then decisive; when something feels meaningful, they act on it with surprising force.",
+      gives: "Conviction with substance: they choose carefully and commit fully to what they choose.",
+      grinds: "Decisions arrive finished; the thinking happens inward and alone, so you may learn the outcome before you knew there was a question.",
+      script: "I would rather be in the room while you decide. Can you think out loud with me, even if it is messy?" },
+    "water-fire": { name: "The Night Swimmer",
+      sketch: "Deep with flashes of light. Mostly inward and reflective, but warm and funny in the right company.",
+      gives: "Intimacy: real talk, private jokes, a small world built for the two of you.",
+      grinds: "They swing between closeness and distance; warmth can vanish without warning when they feel overexposed.",
+      script: "When you pull away I start guessing. Can we agree on a signal for needing space, not distance from me?" },
+    "water-earth": { name: "The Still Pond",
+      sketch: "Deep and steady. Thoughtful, patient, and caring in an understated way.",
+      gives: "Patience: they stay calm when others spin, and their care is quiet and consistent.",
+      grinds: "Pulled between going deep and holding still; they can stall, carry worry silently, or resist change.",
+      script: "You do not have to carry this quietly. Tell me the worst version and we will look at it together." },
+    "water-metal": { name: "The Scholar",
+      sketch: "Depth with precision. They think rigorously, value truth, and choose a few people very carefully.",
+      gives: "Honesty and depth: no games, real conversations, and a mind that takes you seriously.",
+      grinds: "They can feel distant or clinical; feelings get analyzed before they get shared.",
+      script: "It does not need to make sense yet. Tell me what you feel, and we can work it out together." }
   },
 
   /* The cycle chart: arrows drawn between both people's elements */
@@ -1149,10 +1287,19 @@ function fill(tpl, vars) {
   return String(tpl).replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; });
 }
 
-/* The written pairing report: you and them are scores objects (only
-   primary is read), names are display strings. Pure: returns strings. */
+/* Key into CONTENT.combos: primary-secondary, pure when there is no secondary */
+function comboKey(s) {
+  return s.primary + "-" + (s.secondary || s.primary);
+}
+
+/* The written pairing report: you and them are scores objects (primary
+   and secondary are read), names are display strings. Pure: returns
+   strings. Their combo profile leads What works / Where it grinds; the
+   relation supplies the rest, so each of the 25 partner patterns reads
+   differently even when two share a primary. */
 function pairingReport(you, them, youName, themName) {
   const R = CONTENT.report;
+  const P = CONTENT.combos[comboKey(them)], Y = CONTENT.combos[comboKey(you)];
   const rel = relationOf(them.primary, you.primary);
   const byRel = R.byRelation[rel];
   const en = function (e) { return CONTENT.elements[e].name; };
@@ -1161,16 +1308,29 @@ function pairingReport(you, them, youName, themName) {
     : fill(R.stressPair, { A: youName, a: R.stressVerb[you.primary], B: themName, b: R.stressVerb[them.primary] });
   return {
     relation: rel,
-    strengths: byRel.strengths.slice(),
-    frictions: byRel.frictions.concat([stress]),
-    needs: [
-      fill(R.needsLine, { name: youName + " (" + en(you.primary) + ")", need: R.needs[you.primary] }),
-      fill(R.needsLine, { name: themName + " (" + en(them.primary) + ")", need: R.needs[them.primary] })
+    profiles: [
+      { who: themName, el: them.primary, name: P.name, sketch: P.sketch },
+      { who: youName, el: you.primary, name: Y.name, sketch: Y.sketch }
     ],
-    repair: [
-      { who: youName, el: you.primary, text: R.repair[you.primary] },
-      { who: themName, el: them.primary, text: R.repair[them.primary] }
-    ]
+    strengths: [P.gives].concat(byRel.strengths.slice(0, 2)),
+    frictions: [P.grinds, byRel.frictions[0], stress],
+    reach: [
+      { who: themName, el: them.primary, text: P.script },
+      { who: youName, el: you.primary, text: Y.script }
+    ],
+    /* a shared primary would print the same line twice: say it once, for both */
+    needs: you.primary === them.primary
+      ? [fill(R.needsLine, { name: youName + R.bothJoin + themName + " (" + en(you.primary) + ")", need: R.needs[you.primary] })]
+      : [
+          fill(R.needsLine, { name: youName + " (" + en(you.primary) + ")", need: R.needs[you.primary] }),
+          fill(R.needsLine, { name: themName + " (" + en(them.primary) + ")", need: R.needs[them.primary] })
+        ],
+    repair: you.primary === them.primary
+      ? [{ who: youName + R.bothJoin + themName, el: you.primary, text: R.repair[you.primary] }]
+      : [
+          { who: youName, el: you.primary, text: R.repair[you.primary] },
+          { who: themName, el: them.primary, text: R.repair[them.primary] }
+        ]
   };
 }
 
@@ -1412,7 +1572,26 @@ function runFixtures() {
   console.log((edOk ? "PASS" : "FAIL") + " :: cycle edges: water checks fire, wood feeds fire");
   if (edOk) pass++;
 
-  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 6;
+  /* all 25 partner patterns written, complete, and inside the copy rules */
+  const banned = /destiny|chakra|astrolog|zodiac|horoscope|energy|diagnos|disorder|[\u2013\u2014]/i;
+  let coOk = true;
+  ELS.forEach(function (p1) {
+    ELS.forEach(function (p2) {
+      const c = CONTENT.combos[p1 + "-" + p2];
+      ["name", "sketch", "gives", "grinds", "script"].forEach(function (k) {
+        if (!c || typeof c[k] !== "string" || !c[k].trim() || banned.test(c[k])) { coOk = false; console.warn("COMBO COPY:", p1, p2, k); }
+      });
+    });
+  });
+  const rp = pairingReport({ primary: "fire", secondary: "water" }, { primary: "water", secondary: "wood" }, "A", "B");
+  coOk = coOk && rp.profiles[0].name === CONTENT.combos["water-wood"].name &&
+    rp.strengths[0] === CONTENT.combos["water-wood"].gives && rp.reach[1].text === CONTENT.combos["fire-water"].script &&
+    pairingReport({ primary: "fire" }, { primary: "water", secondary: "earth" }, "A", "B").strengths[0] !== rp.strengths[0];
+  console.assert(coOk, "COMBO FAIL: 25 partner patterns");
+  console.log((coOk ? "PASS" : "FAIL") + " :: all 25 partner patterns written, rule-clean, and wired into the report");
+  if (coOk) pass++;
+
+  const totalFix = FIXTURES.length + DYAD_FIXTURES.length + 7;
   console.log(pass + "/" + totalFix + " fixtures passed");
   console.groupEnd();
   return pass === totalFix;
@@ -2452,6 +2631,7 @@ function renderBlueprint() {
         '<p style="max-width:46ch;margin:14px auto 0;color:var(--ink-70);font-size:14.5px;line-height:1.7">' + st.gloss + "</p>" +
       "</div>" +
       body +
+      asPartnerHTML(s) +
       matchesSectionHTML() +
       compareSectionHTML() +
       personaSectionHTML() +
@@ -2460,6 +2640,24 @@ function renderBlueprint() {
   bindCompare();
   renderMatches();
   setupCompanion();
+}
+
+/* The user's own partner pattern, from the same 25 profiles */
+function asPartnerHTML(s) {
+  const R = CONTENT.report;
+  const c = CONTENT.combos[comboKey(s)];
+  const list = function (xs) { return '<ul class="plain">' + xs.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; };
+  return '<div class="section"><p class="lbl">' + R.asPartnerLabel + "</p>" +
+    '<div class="rule" style="background:var(--' + s.primary + ')"></div>' +
+    '<p class="display" style="font-size:17px;color:var(--' + s.primary + ')">' + esc(c.name) + "</p>" +
+    '<p class="portrait" style="margin:10px 0 14px">' + esc(c.sketch) + "</p>" +
+    '<div class="cols">' +
+      '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.strengthsLabel + "</p>" + list([c.gives]) + "</div>" +
+      '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.frictionsLabel + "</p>" + list([c.grinds]) + "</div>" +
+    "</div>" +
+    '<div class="card" style="margin-top:14px"><p class="lbl">' + R.asPartnerReach + "</p>" +
+      '<p style="font-size:15px;line-height:1.65;margin-top:8px">"' + esc(c.script) + '"</p></div>' +
+  "</div>";
 }
 
 /* ---------- matches: the 25 combos, as The Pull and The Hold ---------- */
@@ -2502,7 +2700,7 @@ function renderMatches() {
           '<div class="dn"><span class="micro">' + CONTENT.persona.stability + "</span><b>" + m.stab + "</b></div>" +
           '<div class="dn"><span class="micro">' + CONTENT.persona.chemistry + "</span><b>" + m.chem + "</b></div>" +
         "</div>" +
-        reportHTML(pairingReport(UI.scores, partner, you, fill(M.partner, { combo: comboText(m) }))) + "</div>";
+        reportHTML(pairingReport(UI.scores, partner, you, fill(M.partner, { combo: comboText(m) })), { partnerOnly: true }) + "</div>";
     }
     return '<div class="matchrow' + (open ? " open" : "") + '">' +
       '<button class="matchhead" data-match="' + key + '" aria-expanded="' + open + '">' +
@@ -2673,10 +2871,18 @@ function compareSectionHTML() {
 }
 
 /* The written report, as cards. Shared by Compare and match details. */
-function reportHTML(r) {
+function reportHTML(r, opts) {
+  opts = opts || {};
   const R = CONTENT.report;
   const list = function (xs) { return '<ul class="plain">' + xs.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"; };
-  return '<div class="cols" style="margin-top:16px">' +
+  const profs = opts.partnerOnly ? r.profiles.slice(0, 1) : r.profiles;
+  const reach = opts.partnerOnly ? r.reach.slice(0, 1) : r.reach;
+  return profs.map(function (pf) {
+      return '<div style="margin-top:14px"><p class="lbl">' + esc(pf.who) + "</p>" +
+        '<p class="display" style="font-size:15px;margin-top:4px;color:var(--' + pf.el + ')">' + esc(pf.name) + "</p>" +
+        '<p style="font-size:15px;line-height:1.65;color:var(--ink-70);margin-top:4px">' + esc(pf.sketch) + "</p></div>";
+    }).join("") +
+    '<div class="cols" style="margin-top:16px">' +
       '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.strengthsLabel + "</p>" + list(r.strengths) + "</div>" +
       '<div class="card"><p class="lbl" style="margin-bottom:10px">' + R.frictionsLabel + "</p>" + list(r.frictions) + "</div>" +
     "</div>" +
@@ -2685,6 +2891,13 @@ function reportHTML(r) {
       '<p class="micro" style="margin:6px 0 4px">' + R.repairIntro + "</p>" +
       r.repair.map(function (x) {
         return '<p class="askq" style="color:var(--' + x.el + ')">&gt; ' + esc(x.who) + "</p>" +
+          '<p style="font-size:15px;line-height:1.65">"' + esc(x.text) + '"</p>';
+      }).join("") +
+    "</div>" +
+    '<div class="card" style="margin-top:14px"><p class="lbl">' + R.reachLabel + "</p>" +
+      '<p class="micro" style="margin:6px 0 4px">' + R.reachIntro + "</p>" +
+      reach.map(function (x) {
+        return '<p class="askq" style="color:var(--' + x.el + ')">&gt; ' + esc(fill(R.reachLine, { name: x.who })) + "</p>" +
           '<p style="font-size:15px;line-height:1.65">"' + esc(x.text) + '"</p>';
       }).join("") +
     "</div>";

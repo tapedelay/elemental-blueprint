@@ -15,7 +15,7 @@ There is no build step, no package.json, and no dependency install. Verified too
 | Run everything | `node server.js` from this folder, then open http://localhost:8873 |
 | One-click run (Windows) | double-click `launch.bat` (Windows Terminal tab running the server + opens the browser) |
 | Static only | open `index.html` directly; everything works except Ask / Read anyone, which self-hide |
-| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `13/13 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
+| Test suite | open http://localhost:8873/?debug=1 and check the console: the fixture harness must print `14/14 fixtures passed` (or call `runFixtures()` in the console; it returns `true` on pass) |
 | Server syntax check | `node --check server.js` |
 | App script syntax check | `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"` |
 
@@ -62,16 +62,17 @@ __impl_questions.json  historical WIP artifact: the question-bank draft that was
 - Direct entry, blueprint-code loading, saved-results store (SPEC 11c), including forged-code rejection in `decodeBlueprint()`.
 - Repo is pushed to GitHub: private `tapedelay/elemental-blueprint`, local `master` in sync with `origin/master` (verified 2026-07-09, at this commit). Direct-to-master pushes, no branches or PRs, per portfolio convention.
 
-**Added 2026-10-06 (SPEC 11d), 13/13 fixtures:**
+**Added 2026-10-06 (SPEC 11d), 14/14 fixtures:**
 - Stress check screen (`lately`) after the bank; `scoreAnswers(answers, lately)` blends it into state. Fixes state barely depending on answers.
 - Observer reads (`profile.subject`, `UI.observed`, CONTENT `other`/`o` wording), required names, saved-result rename/delete, every result listed on finish.
 - Matches: `comboScore`/`rankMatches` with age/polarity modifiers, The Pull / The Hold, detail sheets.
 - Compare: both-direction cards, `cycleEdges` arrow pentagon, orbit scene, `pairingReport`; Read anyone shares `dyadCardHTML`.
+- 25 partner-pattern profiles (`CONTENT.combos`, `comboKey`), folded into `pairingReport`, Matches details, Compare, and the Blueprint "As a partner" section; a fixture checks all 25 exist and pass the banned-vocabulary/em-dash rules.
 - Lo-poly crystal renderer (`crystalVerts`/`rasterCrystal`/`drawCrystal`/`drawOrbit`, `mountCrystals` under the `_gen` guard), boot, image export (`saveCardImage`).
 
 **Still open:**
-- SPEC section 10's 25 bespoke combo profiles (the report is relation/element-driven for now), friendship/work lens, PWA manifest, question bank growth toward ~20 items.
-- `index.html` is ~155 KB, just over SPEC section 10's ~150 KB guideline.
+- Friendship/work lens, PWA manifest, question bank growth toward ~20 items.
+- `index.html` is ~173 KB, over SPEC section 10's ~150 KB guideline (accepted 2026-10-06 for the 25 profiles; the guideline is soft).
 
 **Untested / known gaps:**
 - No real-device pass yet (iPad/phone). The quiz's long-press "also me" gesture and the 375 px layout are the risk areas.
